@@ -1,1 +1,1 @@
-# GeneralizedBM.jl
+# GeneralizedBM
