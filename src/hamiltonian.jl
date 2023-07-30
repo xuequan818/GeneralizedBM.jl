@@ -1,7 +1,7 @@
 #-------------------------------------------------------------------------------
 #   Assemble truncated momentum space Hamiltonian matrices
 #-------------------------------------------------------------------------------
-export hamiltonian
+export hamIntra, hamInter, hamiltonian
 
 function hamIntra(basis::Basis, h::Hopping, Lat::TBLG, q::Vector{Float64})
 	hG1 = h.h11.hGv

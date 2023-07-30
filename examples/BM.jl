@@ -1,6 +1,8 @@
 using KrylovKit
 using GeneralizedBM
 using Plots
+using LinearAlgebra
+
 
 θ = 1.05 # twist angle 
 rcut = 200. # cutoff of the basis

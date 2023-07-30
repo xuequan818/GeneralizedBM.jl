@@ -94,10 +94,10 @@ function hopBM(Lat::TBLG, t::Float64, Kt::Vector{Vector{Float64}}, α::Float64)
     hFT(k) = (α * exp(-Lz * sqrt(norm(k)^2 + α^2)) * (1 + Lz * sqrt(norm(k)^2 + α^2)) / (norm(k)^2 + α^2)^(3 / 2)) / 2pi
 	orb12(k) = [exp(im * dot(k, orb[1][:, 1] - orb[2][:, 1])), exp(im * dot(k, orb[1][:, 1] - orb[2][:, 2])), 
 				exp(im * dot(k, orb[1][:, 2] - orb[2][:, 1])), exp(im * dot(k, orb[1][:, 2] - orb[2][:, 2]))]
-    hFT12(k) = hFT(k1) .* orb12(k)
+    hFT12(k) = hFT(k) .* orb12(k)
     orb21(k) = [exp(im * dot(k, orb[2][:, 1] - orb[1][:, 1])), exp(im * dot(k, orb[2][:, 1] - orb[1][:, 2])),
         		exp(im * dot(k, orb[2][:, 2] - orb[1][:, 1])), exp(im * dot(k, orb[2][:, 2] - orb[1][:, 2]))]
-    hFT21(k) = hFT(k1) .* orb21(k)
+    hFT21(k) = hFT(k) .* orb21(k)
 
 	return hopGen(hG11, hG22, hFT12, hFT21, Kt, 1, latR[1], latR[2])
 end

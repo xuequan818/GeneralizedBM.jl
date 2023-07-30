@@ -1,14 +1,16 @@
 using KrylovKit
-#using GeneralizedBM
-using Plots
+using GeneralizedBM
+using Plots, Plots.PlotMeasures, LaTeXStrings
+using LinearAlgebra
 
-θ = 0.98 # twist angle 
+θ = 1.05 # twist angle 
 rcut = 200. # cutoff of the basis
 
 # define the TBL model
 Lat = TBLG(θ);
-h = hopBM(Lat)
-basis = Basis(rcut,Lat);
+h = hopBM(Lat);
+#h = hopBM(Lat; Kt=map(x -> Lat.KM[2], 1:3));
+basis = Basis(rcut, Lat);
 Hinter = hamInter(basis, h, Lat)
 
 # build the symmetric path (K->K'->Γ->Γ->K)
