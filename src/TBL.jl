@@ -30,7 +30,7 @@ struct TBLG <: TwistedBilayer
 end
 
 function TblgGen(latG::Array{Float64,2}, orbG::Array{Float64,2}, KG::Vector{Float64}, θ::Float64, Lz::Float64)
-    θ = 2pi * θ / 360
+    θ = (2pi * θ) / 360
     R(x) = [cos(x) -sin(x); sin(x) cos(x)]
     R1 = R(-θ/2)
     R2 = R(θ/2)
@@ -46,4 +46,4 @@ function TblgGen(latG::Array{Float64,2}, orbG::Array{Float64,2}, KG::Vector{Floa
     return TBLG(lat, latR, latM, latR_UV, orb, KM, θ, Lz)
 end
 
-TBLG(θ::Float64; Lz=0., a = 1., latG = a / 2 .* [1. -1.; sqrt(3) sqrt(3)], orbG = [0. 0.; 0. a/sqrt(3)], KG = 4pi/3a .* [1., 0.]) = TblgGen(latG, orbG, KG, θ, Lz)
+TBLG(θ::Float64; Lz = 1., a = 1., latG = a / 2 .* [1. -1.; sqrt(3) sqrt(3)], orbG = [0. 0.; 0. a/sqrt(3)], KG = 4pi/3a .* [1., 0.]) = TblgGen(latG, orbG, KG, θ, Lz)

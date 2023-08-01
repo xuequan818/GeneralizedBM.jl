@@ -3,12 +3,12 @@ using GeneralizedBM
 using Plots, Plots.PlotMeasures, LaTeXStrings
 using LinearAlgebra
 
-θ = 1.05 # twist angle 
-rcut = 200. # cutoff of the basis
+θ = 1.1 # twist angle 
+rcut = 140. # cutoff of the basis
 
 # define the TBL model
-Lat = TBLG(θ);
-h = hopBM(Lat);
+Lat = TBLG(θ; Lz = 0.45);
+h = hopBM(Lat; t=2 / sqrt(3))
 #h = hopBM(Lat; Kt=map(x -> Lat.KM[2], 1:3));
 basis = Basis(rcut, Lat);
 Hinter = hamInter(basis, h, Lat)
@@ -36,7 +36,7 @@ function path(A::Vector{Float64}, B::Vector{Float64}, factor::Int64)
 	return xx,yy
 end
 
-num = 8
+num = 5
 qAB = path(A,B,num);
 qBC = path(B,C,num);
 qCD = path(C,D,Int(round(sqrt(3)*num)));
@@ -55,8 +55,9 @@ P2 = plot(qx, qy, st=:scatter, aspect_ratio=:equal, xlims=[minimum(qx) - 0.1, ma
 
 # generate the band structure
 Eq = []
-n_eigs = 14
-nE = 4
+n_eigs = 16
+nE = 6
+tol = θ >= 1.5 ? 1e-2 : 1e-3
 for (q1,q2,i) in zip(qx,qy,1:length(qx))
     println(" $(i)-th q of $(length(qx)) q-points")
     Hintra = hamIntra(basis, h, Lat, [q1, q2])
@@ -64,6 +65,11 @@ for (q1,q2,i) in zip(qx,qy,1:length(qx))
 	@time E, U = eigsolve(H, n_eigs, EigSorter(norm; rev=false); krylovdim=n_eigs + 50);
     sort!(E)
 	l = findfirst(x->x>0.,E)
+    if E[l+1] < tol && (E[l+1] - E[l]) < tol
+		l += 1
+	elseif abs(E[l-2])< tol && abs(E[l-1]) < tol && abs(E[l-2]-E[l-1]) < tol
+		l -= 1
+	end 
 	append!(Eq, E[l-nE:l+nE-1])
 end
 Eq = reshape(Eq, 2nE, length(qx))
@@ -73,6 +79,6 @@ pname = [L"K", L"K'", L"\Gamma", L"\Gamma", L"K"]
 P3 = plot(Eq[1, :], ylims=[-1.1*maximum(abs.(Eq)), 1.1*maximum(abs.(Eq))], ylabel="Energy", guidefontsize=22, color=cols[1], title=L"%$θ^\circ", label="", tickfontsize=20, legendfontsize=20, xticks=(pind, pname),
 legend=:topright, grid=:off, box=:on, size=(740, 620), titlefontsize=30, right_margin=3mm, top_margin=3mm, lw = 3)
 for i = 2:2nE
-	plot!(P3, Eq[i,:],label="", lw = 3)
+	plot!(P3, Eq[i,:],label="", lw = 3)	
 end
 P3 

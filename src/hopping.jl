@@ -82,12 +82,14 @@ function hopBM(Lat::TBLG, t::Float64, Kt::Vector{Vector{Float64}}, α::Float64)
 	latR = Lat.latR
 	orb = Lat.orb
 	Lz = Lat.Lz
+    c1 = sqrt(Lat.latR_UV[1])
+    c2 = sqrt(Lat.latR_UV[2])
 
 	# intralayer hopping
 	#F(k,i) = exp(im * dot(k, orb[i][:,2]- orb[i][:,1])) * (1 + exp(-im * dot(k, lat[i][:,1]) + exp(-im * dot(k, lat[i][:,2]))))
-    F(k, i) = 1 + exp(-im * dot(k, lat[i][:, 1]) + exp(-im * dot(k, lat[i][:, 2])))
-    hG11(k) = -t .* [0.0, F(k, 1), conj(F(k, 1)), 0.0]
-    hG22(k) = -t .* [0.0, F(k, 2), conj(F(k, 2)), 0.0]
+    F(k, i) = 1 + exp(-im * dot(k, lat[i][:, 1])) + exp(-im * dot(k, lat[i][:, 2]))
+    hG11(k) = -t/c1 .* [0.0, F(k, 1), conj(F(k, 1)), 0.0]
+    hG22(k) = -t/c2 .* [0.0, F(k, 2), conj(F(k, 2)), 0.0]
 
 	# interlayer hopping
     # h(r, l) = exp(-α*sqrt(r^2+l^2))
@@ -102,4 +104,4 @@ function hopBM(Lat::TBLG, t::Float64, Kt::Vector{Vector{Float64}}, α::Float64)
 	return hopGen(hG11, hG22, hFT12, hFT21, Kt, 1, latR[1], latR[2])
 end
 
-hopBM(Lat::TBLG; t = 110., Kt = push!(copy(Lat.KM), Lat.KM[1]), α = 1.) = hopBM(Lat, t, Kt, α)
+hopBM(Lat::TBLG; t = 2 / sqrt(3), Kt = push!(copy(Lat.KM), Lat.KM[1]), α = 1.) = hopBM(Lat, t, Kt, α)
