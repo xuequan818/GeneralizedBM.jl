@@ -18,7 +18,7 @@ KM : positions of Moire dirac points
 Lz : distance between two sheets
 """
 
-struct TBLG <: TwistedBilayer
+mutable struct TBLG <: TwistedBilayer
     lat::Vector{Array{Float64,2}}
     latR::Vector{Array{Float64,2}}
     latM::Array{Float64,2}

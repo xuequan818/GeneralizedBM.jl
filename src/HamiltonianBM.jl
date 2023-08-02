@@ -100,7 +100,6 @@ function hamInter_BM(basis::Basis, h::Hopping, Lat::TBLG)
 				k1 = Gind[G1[1],G1[2]]
 				if k1 > 0
 					@. qkt = Kt + G1tau[l]
-					@show norm(qkt)
 					v12 = hF12(qkt)
 					v21 = hF21(qkt)
 

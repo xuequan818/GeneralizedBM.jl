@@ -4,12 +4,12 @@ using Plots
 using LinearAlgebra
 
 
-θ = 1.1 # twist angle 
-rcut = 140. # cutoff of the basis
+θ = 0.98 # twist angle 
+rcut = 100. # cutoff of the basis
 
 # define the TBL model
-Lat = TBLG(θ; Lz = 0.45);
-h = hopBM(Lat; t = 2.6)
+Lat = TBLG(θ);
+h = hopBM(Lat)
 basis = Basis(rcut,Lat);
 
 # generate hamiltonian at momentum q

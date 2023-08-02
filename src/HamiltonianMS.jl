@@ -8,8 +8,7 @@ export hamIntra_MS, hamInter_MS, ham_MS
 function hamIntra_MS(basis::Basis, h::Hopping, Lat::TBLG, q::Vector{Float64})
 	h1 = h.h11.hG
     h2 = h.h22.hG
-    G1 = basis.G1
-    G2 = basis.G2
+    GM = basis.GM
 	dof = basis.dof
 
 	c1 = sqrt(Lat.latR_UV[1])
@@ -30,12 +29,11 @@ function hamIntra_MS(basis::Basis, h::Hopping, Lat::TBLG, q::Vector{Float64})
     q1 = zeros(Float64, 2)
     q2 = zeros(Float64, 2)
 	for k = 1 : dof #loop for the reciprocal lattices
-		@views G2k = G2[k,:]
-		@. q2 = G2k + q                           
+        @views Gk = GM[k, :]
+		@. q2 = Gk + q                           
 		hv1 = c1 * h1(q2)
 
-        @views G1k = G1[k, :]
-        @. q1 = G1k + q
+        @. q1 = -Gk + q
         hv2 = c2 * h2(q1)
 
         @. G2i = i + (k - 1) * orbl
@@ -70,7 +68,7 @@ function hamInter_MS(basis::Basis, h::Hopping, Lat::TBLG, q::Vector{Float64})
     indj = Int64[]
     vals = ComplexF64[]
 
-	tol = 1e-5
+	tol = 1e-6
 	qmn = zeros(Float64, 2)
     G1i = zeros(Int64, N)
     G1j = zeros(Int64, N)
@@ -80,12 +78,12 @@ function hamInter_MS(basis::Basis, h::Hopping, Lat::TBLG, q::Vector{Float64})
 		for k1 = 1:dof # loop for the reciprocal lattices of sheet1
             @. qmn = q + G1[k1,:] + G2[k2,:]
 			v12 = hF12(qmn)
-			v21 = hF21(qmn)
-			if norm(v12) > tol || norm(v21) > tol
+			if norm(v12,Inf) > tol
                 @. G2i = i + (k2 - 1) * orbl
                 @. G1j = j + (k1 - 1 + dof) * orbl
                 @. G1i = i + (k1 - 1 + dof) * orbl
                 @. G2j = j + (k2 - 1) * orbl
+                v21 = hF21(qmn)
 
                 append!(indi, G2i, G1i)
                 append!(indj, G1j, G2j)

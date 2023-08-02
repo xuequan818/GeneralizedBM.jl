@@ -3,12 +3,12 @@ using KrylovKit
 using Plots, Plots.PlotMeasures, LaTeXStrings
 using LinearAlgebra
 
-θ = 1.05 # twist angle 
-rcut = 140. # cutoff of the basis
+θ = 1.1 # twist angle 
+rcut = 60. # cutoff of the basis
 
 # define the TBL model
-Lat = TBLG(θ; Lz = 0.45);
-h = hopBM(Lat; t=2 / sqrt(3))
+Lat = TBLG(θ);
+h = hopBM(Lat)
 #h = hopBM(Lat; Kt=map(x -> Lat.KM[2], 1:3));
 basis = Basis(rcut, Lat);
 Hinter = hamInter_BM(basis, h, Lat)
@@ -36,7 +36,7 @@ function path(A::Vector{Float64}, B::Vector{Float64}, factor::Int64)
 	return xx,yy
 end
 
-num = 5
+num = 12
 qAB = path(A,B,num);
 qBC = path(B,C,num);
 qCD = path(C,D,Int(round(sqrt(3)*num)));
@@ -62,13 +62,19 @@ for (q1,q2,i) in zip(qx,qy,1:length(qx))
     Hintra = hamIntra_BM(basis, h, Lat, [q1, q2])
 	H = Hinter + Hintra
 	@time E, U = eigsolve(H, n_eigs, EigSorter(norm; rev=false); krylovdim=n_eigs + 50);
-	s = sortperm(E)
-    l1 = findfirst(x -> x == 1, s)
-    l2 = findfirst(x -> x == 2, s)
+	#s = sortperm(E)
+    #s1 = findfirst(x -> x == 1, s)
+    #s2 = findfirst(x -> x == 2, s)
     sort!(E)
-	a1 = E[l1] 
-	a2 = E[l2]
-	l = a1*a2 < 0 ? findfirst(x->x>0.,E) : (a1 > 0 ? l2 : l1) 
+	#a1 = E[s1] 
+	#a2 = E[s2]
+	#l1 = a1*a2 < 0 ? findfirst(x->x>0.,E) : (a1 > 0 ? s2 : s1) 
+	l1 = findfirst(x->x>0.,E)
+	E1 = maximum([minimum([abs(E[l1-j] - E[l1+j-1]), abs(E[l1-j] + E[l1+j-1])]) for j=1:nE])
+    E2 = maximum([minimum([abs(E[l1+1-j] - E[l1+j]), abs(E[l1-j+1] + E[l1+j])]) for j = 1:nE])
+    E3 = maximum([minimum([abs(E[l1-j-1] - E[l1+j-2]), abs(E[l1-j-1] + E[l1+j-2])]) for j = 1:nE])
+	l2 = findmin([E1,E2,E3])[2]
+	l = [l1, l1+1, l1-1][l2]
 	append!(Eq, E[l-nE:l+nE-1])
 end
 Eq = reshape(Eq, 2nE, length(qx))

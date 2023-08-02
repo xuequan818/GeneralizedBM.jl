@@ -4,13 +4,13 @@ using Plots
 using LinearAlgebra
 
 
-θ = 5.# twist angle 
-rcut = 20. # cutoff of the basis
+θ = 0.98 # twist angle 
+rcut = 100.0 # cutoff of the basis
 
 # define the TBL model
-Lat = TBLG(θ; Lz = 0.45);
-h = hopBM(Lat; t = 100.)
-basis = Basis(rcut,Lat);
+Lat = TBLG(θ)
+h = hopBM(Lat)
+basis = Basis(rcut, Lat);
 
 # generate hamiltonian at momentum q
 q = Lat.KM[1]
@@ -19,5 +19,5 @@ q = Lat.KM[1]
 # solve the eigen problem
 n_eigs = 10
 @time E, U = eigsolve(Hms, n_eigs, EigSorter(norm; rev=false); krylovdim=n_eigs + 50);
-@show sort!(E)
+@show sort!(E);
 p1 = plot(E)

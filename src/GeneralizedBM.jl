@@ -3,7 +3,7 @@ module GeneralizedBM
 using Arpack, LinearAlgebra, KrylovKit
 using Printf, Plots, Plots.PlotMeasures, LaTeXStrings
 using StaticArrays, SparseArrays
-using ForwardDiff
+using ForwardDiff, Roots
 
 include("TBL.jl")
 include("basis.jl")
