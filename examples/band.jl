@@ -1,9 +1,9 @@
 using KrylovKit
-using GeneralizedBM
+#using GeneralizedBM
 using Plots, Plots.PlotMeasures, LaTeXStrings
 using LinearAlgebra
 
-θ = 1.1 # twist angle 
+θ = 1.05 # twist angle 
 rcut = 140. # cutoff of the basis
 
 # define the TBL model
@@ -11,7 +11,7 @@ Lat = TBLG(θ; Lz = 0.45);
 h = hopBM(Lat; t=2 / sqrt(3))
 #h = hopBM(Lat; Kt=map(x -> Lat.KM[2], 1:3));
 basis = Basis(rcut, Lat);
-Hinter = hamInter(basis, h, Lat)
+Hinter = hamInter_BM(basis, h, Lat)
 
 # build the symmetric path (K->K'->Γ->Γ->K)
 A = Lat.KM[1]
@@ -57,19 +57,18 @@ P2 = plot(qx, qy, st=:scatter, aspect_ratio=:equal, xlims=[minimum(qx) - 0.1, ma
 Eq = []
 n_eigs = 16
 nE = 6
-tol = θ >= 1.5 ? 1e-2 : 1e-3
 for (q1,q2,i) in zip(qx,qy,1:length(qx))
     println(" $(i)-th q of $(length(qx)) q-points")
-    Hintra = hamIntra(basis, h, Lat, [q1, q2])
+    Hintra = hamIntra_BM(basis, h, Lat, [q1, q2])
 	H = Hinter + Hintra
 	@time E, U = eigsolve(H, n_eigs, EigSorter(norm; rev=false); krylovdim=n_eigs + 50);
+	s = sortperm(E)
+    l1 = findfirst(x -> x == 1, s)
+    l2 = findfirst(x -> x == 2, s)
     sort!(E)
-	l = findfirst(x->x>0.,E)
-    if E[l+1] < tol && (E[l+1] - E[l]) < tol
-		l += 1
-	elseif abs(E[l-2])< tol && abs(E[l-1]) < tol && abs(E[l-2]-E[l-1]) < tol
-		l -= 1
-	end 
+	a1 = E[l1] 
+	a2 = E[l2]
+	l = a1*a2 < 0 ? findfirst(x->x>0.,E) : (a1 > 0 ? l2 : l1) 
 	append!(Eq, E[l-nE:l+nE-1])
 end
 Eq = reshape(Eq, 2nE, length(qx))

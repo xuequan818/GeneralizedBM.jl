@@ -8,6 +8,7 @@ using ForwardDiff
 include("TBL.jl")
 include("basis.jl")
 include("hopping.jl")
-include("hamiltonian.jl")
+include("HamiltonianBM.jl")
+include("HamiltonianMS.jl")
 
 end # module GeneralizedBM

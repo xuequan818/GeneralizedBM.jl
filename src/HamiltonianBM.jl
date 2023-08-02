@@ -1,9 +1,9 @@
 #-------------------------------------------------------------------------------
 #   Assemble truncated momentum space Hamiltonian matrices
 #-------------------------------------------------------------------------------
-export hamIntra, hamInter, hamiltonian
+export hamIntra_BM, hamInter_BM, ham_BM
 
-function hamIntra(basis::Basis, h::Hopping, Lat::TBLG, q::Vector{Float64})
+function hamIntra_BM(basis::Basis, h::Hopping, Lat::TBLG, q::Vector{Float64})
 	hG1 = h.h11.hGv
 	dhG1 = h.h11.dhGv
     hG2 = h.h22.hGv
@@ -60,7 +60,7 @@ function hamIntra(basis::Basis, h::Hopping, Lat::TBLG, q::Vector{Float64})
 end
 
 
-function hamInter(basis::Basis, h::Hopping, Lat::TBLG)
+function hamInter_BM(basis::Basis, h::Hopping, Lat::TBLG)
 	Kt = h.Kt[3]
 	hF12 = h.h12.hFT
     hF21 = h.h21.hFT
@@ -100,6 +100,7 @@ function hamInter(basis::Basis, h::Hopping, Lat::TBLG)
 				k1 = Gind[G1[1],G1[2]]
 				if k1 > 0
 					@. qkt = Kt + G1tau[l]
+					@show norm(qkt)
 					v12 = hF12(qkt)
 					v21 = hF21(qkt)
 
@@ -121,4 +122,4 @@ function hamInter(basis::Basis, h::Hopping, Lat::TBLG)
     return sparse(indi, indj, vals, 2dof * orbl, 2dof * orbl)
 end
 
-hamiltonian(Lat::TBLG, basis::Basis, h::Hopping, q::Vector{Float64}) = hamIntra(basis, h, Lat, q) + hamInter(basis, h, Lat)
+ham_BM(Lat::TBLG, basis::Basis, h::Hopping, q::Vector{Float64}) = hamIntra_BM(basis, h, Lat, q) + hamInter_BM(basis, h, Lat)

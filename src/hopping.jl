@@ -59,7 +59,7 @@ function BtauGen(τ::Int64)
 	
 	@assert τ == 1 
 
-	Btau = [[0,0], [0,1], [1,0]]
+	Btau = [[0,0], [0,1], [-1,0]]
 end
 
 function hopGen(hG11::Function, hG22::Function, hFT12::Function, hFT21::Function, Kt::Vector{Vector{Float64}}, 
@@ -105,3 +105,4 @@ function hopBM(Lat::TBLG, t::Float64, Kt::Vector{Vector{Float64}}, α::Float64)
 end
 
 hopBM(Lat::TBLG; t = 2 / sqrt(3), Kt = push!(copy(Lat.KM), Lat.KM[1]), α = 1.) = hopBM(Lat, t, Kt, α)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
