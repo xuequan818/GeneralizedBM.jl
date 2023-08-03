@@ -4,8 +4,8 @@ using Plots
 using LinearAlgebra
 
 
-θ = 0.98 # twist angle 
-rcut = 100. # cutoff of the basis
+θ = 1.1 # twist angle 
+rcut = 60. # cutoff of the basis
 
 # define the TBL model
 Lat = TBLG(θ);

@@ -1,11 +1,11 @@
 using KrylovKit
-#using GeneralizedBM
+using GeneralizedBM
 using Plots
 using LinearAlgebra
 
 
-θ = 0.98 # twist angle 
-rcut = 100.0 # cutoff of the basis
+θ = 1.1 # twist angle 
+rcut = 70.0 # cutoff of the basis
 
 # define the TBL model
 Lat = TBLG(θ)

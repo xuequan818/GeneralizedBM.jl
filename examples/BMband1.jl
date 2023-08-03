@@ -1,9 +1,9 @@
 using KrylovKit
-#using GeneralizedBM
+using GeneralizedBM
 using Plots, Plots.PlotMeasures, LaTeXStrings
 using LinearAlgebra
 
-θ = 1.1 # twist angle 
+θ = 0.98 # twist angle 
 rcut = 60. # cutoff of the basis
 
 # define the TBL model
