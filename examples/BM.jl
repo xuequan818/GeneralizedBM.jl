@@ -1,5 +1,5 @@
 using KrylovKit
-#using GeneralizedBM
+using GeneralizedBM
 using Plots
 using LinearAlgebra
 
