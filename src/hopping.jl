@@ -3,50 +3,29 @@
 # IntraHop for intralayer hopping
 # InterHop for interlayer hopping
 #----------------------------------------------------------------------------
-export IntraHop, InterHop, Hopping, hopBM
-
-"""IntraHop
-Elemets are ordered as AA, AB, BA, BB
-hG : Bloch transform of hrl
-hGv : value of hG at some point (Dirac point)
-dhG : drivative of hG at some point (Dirac point)
-"""
-struct IntraHop
-    hG::Function
-    hGv::Vector{ComplexF64}
-    dhGv::Matrix{ComplexF64}
-end
-
-function intrahGen(hG::Function, Kt::Vector{Float64})
-    hGv = hG(Kt)
-    h(k1, k2) = hG([k1, k2])
-    dh_dx(k1, k2) = ForwardDiff.derivative(k1 -> h(k1, k2), k1)
-    dh_dy(k1, k2) = ForwardDiff.derivative(k2 -> h(k1, k2), k2)
-    dhGv = hcat(dh_dx(Kt[1], Kt[2]), dh_dy(Kt[1], Kt[2]))
-
-    IntraHop(hG, hGv, dhGv)
-end
-
-"""InterHop
-hFT : Fourier transform of h
-"""
-struct InterHop
-    hFT::Function
-end
+export Hopping, hopGBM
 
 """Hopping
+Pintra : expansion order of intralayer
+Pinter : expansion order of interlayer
 hii : intralayer hopping function
 hij : interlayer hopping function
-Kt : taylor expansion points for h11, h22 and hij, respectively
+hiiTP : Taylor polynomial of intralayer hopping function
+hijTP : Taylor polynomial of interlayer hopping function
+Kt : Taylor expansion points for h11, h22 and hij, respectively
 τ : truncation of hopping function
 Bτ : corresponding truncated basis index
 Giτ : corresponding reciprocal lattices of i-sheet
 """
 struct Hopping
-    h11::IntraHop
-    h22::IntraHop
-    h12::InterHop
-    h21::InterHop
+	Pintra::Int64
+	Pinter::Int64
+    h11::Function
+    h22::Function
+    hij::Function
+    h11TP::Function
+    h22TP::Function
+    hijTP::Function
     Kt::Vector{Vector{Float64}}
     τ::Int64
     Bτ::Vector{Vector{Int64}}
@@ -62,46 +41,85 @@ function BtauGen(τ::Int64)
     Btau = [[0, 0], [0, 1], [-1, 0]]
 end
 
-function hopGen(hG11::Function, hG22::Function, hFT12::Function, hFT21::Function, Kt::Vector{Vector{Float64}},
-    τ::Int64, G1::Matrix{Float64}, G2::Matrix{Float64})
 
-    h11 = intrahGen(hG11, Kt[1])
-    h22 = intrahGen(hG22, Kt[2])
-    h12 = InterHop(hFT12)
-    h21 = InterHop(hFT21)
+function hopTaylor(hrl::Function, him::Function, P::Int64, qt::Vector{Float64}, q::Vector{Float64})
+    
+	vrl = hrl(qt)
+	vim = him(qt)
+    for i = 1:P
+        vrl += derivative(hrl, qt, q, i) / factorial(i) # directional derivative of real part
+        vim += derivative(him, qt, q, i) / factorial(i) # directional derivative of imaginary part
+    end
 
-    Bτ = BtauGen(τ)
-    G1τ = map(x -> G1 * x, Bτ)
-    G2τ = map(x -> G2 * x, Bτ)
-
-    return Hopping(h11, h22, h12, h21, Kt, τ, Bτ, G1τ, G2τ)
+    return vrl, vim
 end
 
-function hopBM(Lat::TBLG, t::Float64, Kt::Vector{Vector{Float64}})
+function intraTP(Frl::Function, Fim::Function, P::Int64, qt::Vector{Float64}, q::Vector{Float64}, hval::Vector{ComplexF64})
+	
+	vrl, vim = hopTaylor(Frl, Fim, P, qt, q)
+	@. hval = 0.0 + 0.0im
+	hval[2] = vrl + im * vim
+	hval[3] = vrl - im * vim
+
+	hval
+end
+
+function interTP(f::Vector{Function}, g::Function, P::Int64, qt::Vector{Float64}, q::Vector{Float64}, hval1::Vector{ComplexF64}, hval2::Vector{ComplexF64})
+
+	@. hval1 = 0.0 + 0.0im
+    @. hval2 = 0.0 + 0.0im
+
+	for i = 1:4
+		hrl(x) = g(x) * cos(f[i](x))
+        him(x) = g(x) * sin(f[i](x))
+        vrl, vim = hopTaylor(hrl, him, P, qt, q)
+		hval1[i] = vrl + im * vim
+        hval2[i] = vrl - im * vim
+	end
+	hval2[[2,3]] = hval2[[3,2]]
+
+    hval1, hval2
+end
+
+function hopGBM(Lat::TBLG, t::Float64, Kt::Vector{Vector{Float64}}, Pintra::Int64, Pinter::Int64, τ::Int64)
     lat = Lat.lat
     latR = Lat.latR
     orb = Lat.orb
 
+    #F(k, i) = -t * (1 + exp(-im * dot(k, lat[i][:, 1])) + exp(-im * dot(k, lat[i][:, 2])))
     # intralayer hopping
-    F(k, i) = 1 + exp(-im * dot(k, lat[i][:, 1])) + exp(-im * dot(k, lat[i][:, 2]))
-    hG11(k) = -t .* [0.0, F(k, 1), conj(F(k, 1)), 0.0]
-    hG22(k) = -t .* [0.0, F(k, 2), conj(F(k, 2)), 0.0]
+    Frl(k, i) = -t * (1 + cos(k[1] * lat[i][1, 1] + k[2] * lat[i][2, 1]) + cos(k[1] * lat[i][1, 2] + k[2] * lat[i][2, 2]))
+    Fim(k, i) = -t * (-sin(k[1] * lat[i][1, 1] + k[2] * lat[i][2, 1]) - sin(k[1] * lat[i][1, 2] + k[2] * lat[i][2, 2]))
+	Frl1(k) = Frl(k, 1)
+    Frl2(k) = Frl(k, 2)
+    Fim1(k) = Fim(k, 1)
+    Fim2(k) = Fim(k, 2)
+    h11(k, hval) = intraTP(Frl1, Fim1, 0, k, k, hval)
+    h22(k, hval) = intraTP(Frl2, Fim2, 0, k, k, hval)
+    h11TP(q, hval) = intraTP(Frl1, Fim1, Pintra, Kt[1], q, hval)
+    h22TP(q, hval) = intraTP(Frl2, Fim2, Pintra, Kt[2], q, hval)
 
     # interlayer hopping
     # h(r, l) = exp(-α*sqrt(r^2+l^2))
     α = 2.0
-    hFT(k, l) = (α * exp(-l * sqrt(norm(k)^2 + α^2)) * (1 + l * sqrt(norm(k)^2 + α^2)) / (norm(k)^2 + α^2)^(3 / 2)) / 2pi
-    f(l) = Lat.latR_UV[1] * hFT(Lat.KM[1], l) - 0.11
+    hkl(k, l) = (α * exp(-l * sqrt(k[1]^2 + k[2]^2 + α^2)) * (1 + l * sqrt(k[1]^2 + k[2]^2 + α^2)) / (k[1]^2 + k[2]^2 + α^2)^(3 / 2)) / 2pi
+    f(l) = Lat.latR_UV[1] * hkl(Lat.KM[1], l) - 0.11
     Lz = find_zeros(f, 0.0, α)[1]
-    orb12(k) = [exp(im * dot(k, orb[1][:, 1] - orb[2][:, 1])), exp(im * dot(k, orb[1][:, 1] - orb[2][:, 2])),
-        exp(im * dot(k, orb[1][:, 2] - orb[2][:, 1])), exp(im * dot(k, orb[1][:, 2] - orb[2][:, 2]))]
-    hFT12(k) = hFT(k, Lz) .* orb12(k)
-    orb21(k) = [exp(im * dot(k, orb[2][:, 1] - orb[1][:, 1])), exp(im * dot(k, orb[2][:, 1] - orb[1][:, 2])),
-        exp(im * dot(k, orb[2][:, 2] - orb[1][:, 1])), exp(im * dot(k, orb[2][:, 2] - orb[1][:, 2]))]
-    hFT21(k) = hFT(k, Lz) .* orb21(k)
+	hFT(k) = hkl(k,Lz) 
     Lat.Lz = Lz
+	orbf = Vector{Function}(undef, 4)
+    orbf[1] = k -> k[1] * (orb[1][1, 1] - orb[2][1, 1]) + k[2] * (orb[1][2, 1] - orb[2][2, 1])
+    orbf[2] = k -> k[1] * (orb[1][1, 1] - orb[2][1, 2]) + k[2] * (orb[1][2, 1] - orb[2][2, 2])
+    orbf[3] = k -> k[1] * (orb[1][1, 2] - orb[2][1, 1]) + k[2] * (orb[1][2, 2] - orb[2][2, 1])
+    orbf[4] = k -> k[1] * (orb[1][1, 2] - orb[2][1, 2]) + k[2] * (orb[1][2, 2] - orb[2][2, 2])
+    hij(k, hval1, hval2) = interTP(orbf, hFT, 0, k, k, hval1, hval2)
+    hijTP(qt, q, hval1, hval2) = interTP(orbf, hFT, Pinter, qt, q, hval1, hval2)
 
-    return hopGen(hG11, hG22, hFT12, hFT21, Kt, 1, latR[1], latR[2])
+    Bτ = BtauGen(τ)
+    G1τ = map(x -> latR[1] * x, Bτ)
+    G2τ = map(x -> latR[2] * x, Bτ)
+
+    return Hopping(Pintra, Pinter, h11, h22, hij, h11TP, h22TP, hijTP, Kt, τ, Bτ, G1τ, G2τ)
 end
 
-hopBM(Lat::TBLG; t=2.6 * 2 / sqrt(3), Kt=push!(copy(Lat.KM), Lat.KM[1])) = hopBM(Lat, t, Kt)
+hopGBM(Lat::TBLG; t=2.6 * 2 / sqrt(3), Kt=push!(copy(Lat.KM), Lat.KM[1]), Pintra = 1, Pinter = 0, τ = 1) = hopGBM(Lat, t, Kt, Pintra, Pinter, τ)

@@ -3,37 +3,19 @@ using GeneralizedBM
 using Plots, Plots.PlotMeasures, LaTeXStrings
 using LinearAlgebra
 
-θ = 3. # twist angle 
-rcut = 100.0 # cutoff of the basis
+θ = 1.1 # twist angle 
+rcut = 60.0 # cutoff of the basis
 
 # define the TBL model
-Lat = TBLG(θ);
-h = hopBM(Lat)
+Lat = TBLG(θ)
+hop = hopGBM(Lat)
 #h = hopBM(Lat; Kt=map(x -> Lat.KM[2], 1:3));
 basis = Basis(rcut, Lat);
-Hinter = hamInter_BM(basis, h, Lat)
 
 # build the symmetric path (K->Γ->M->K)
 A = Lat.KM[1]
 B = [A[1] + norm(Lat.KM[1] - Lat.KM[2])*sqrt(3)/2, 0.0]
 C = [A[1],0.]
-
-function path(A::Vector{Float64}, B::Vector{Float64}, factor::Int64)
-
-	xx = []
-	yy = []
-	if abs(A[1]-B[1]) < 1e-8
-		yy = collect(range(A[2], B[2], length=factor + 1))
-		xx = repeat([A[1]],factor + 1)
-	else 
-		f(x) = ((B[2] - A[2])/(B[1]-A[1])) * (x-A[1]) + A[2]
-
-		xx = collect(range(A[1], B[1], length=factor + 1))
-		yy = f.(xx)
-	end
-
-	return xx,yy
-end
 
 num = 4
 qAB = path(A, B, Int(round(sqrt(3) * num)));
@@ -57,10 +39,15 @@ n_eigs = 14
 nE = 4
 for (q1, q2, i) in zip(qx, qy, 1:length(qx))
     println(" $(i)-th q of $(length(qx)) q-points")
-    Hintra = hamIntra_BM(basis, h, Lat, [q1, q2])
-    H = Hinter + Hintra
+    H = ham_MST(Lat, basis, hop, [q1, q2])
     @time E, U = eigsolve(H, n_eigs, EigSorter(norm; rev=false); krylovdim=n_eigs + 50)
-    sort!(E) 
+    s = sortperm(E)
+    s1 = findfirst(x -> x == 1, s)
+    s2 = findfirst(x -> x == 2, s)
+    sort!(E)
+    a1 = E[s1] 
+    a2 = E[s2]
+    l1 = a1*a2 < 0 ? findfirst(x->x>0.,E) : (a1 > 0 ? s2 : s1) 
     l1 = findfirst(x -> x > 0.0, E)
     E1 = maximum([minimum([abs(E[l1-j] - E[l1+j-1]), abs(E[l1-j] + E[l1+j-1])]) for j = 1:nE])
     E2 = maximum([minimum([abs(E[l1+1-j] - E[l1+j]), abs(E[l1-j+1] + E[l1+j])]) for j = 1:nE])

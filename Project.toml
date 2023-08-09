@@ -5,7 +5,6 @@ version = "0.1.0"
 
 [deps]
 Arpack = "7d9fca2a-8960-54d3-9f78-7d1dccf2cb97"
-ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 IterTools = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
 KrylovKit = "0b1a1467-8014-51b9-945f-bf0ae24f4b77"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
@@ -15,4 +14,5 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+TaylorDiff = "b36ab563-344f-407b-a36a-4f200bebf99c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

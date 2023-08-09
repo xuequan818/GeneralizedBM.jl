@@ -16,10 +16,10 @@ basis = Basis(rcut, Lat);
 A = Lat.KM[1]
 B = Lat.KM[2]
 C = [B[1], B[2] + norm(A - B)]
-@time Hms = ham_MS(Lat, basis, hop, C);
+@time Hmst = ham_MST(Lat, basis, hop, C);
 
 # solve the eigen problem
 n_eigs = 10
-@time Ems, Ums = eigsolve(Hms, n_eigs, EigSorter(norm; rev=false); krylovdim=n_eigs + 50);
-@show sort!(Ems);
-p1 = plot(Ems)
+@time Emst, U = eigsolve(Hmst, n_eigs, EigSorter(norm; rev=false); krylovdim=n_eigs + 50);
+@show sort!(Emst);
+p1 = plot(Emst)
