@@ -3,30 +3,22 @@ using GeneralizedBM
 using Plots
 using LinearAlgebra
 
-
 θ = 1. # twist angle 
 rcut = 60.0 # cutoff of the basis
 
 # define the TBL model
 Lat = TBLG(θ)
-p2 = 2
-hop = hopGBM(Lat; Pinter=p2)
 basis = Basis(rcut, Lat);
+q = (Lat.KM[1] + Lat.KM[2])/2
 
-# generate hamiltonian at momentum q
-q = Lat.KM[1]
-@time Hms = hamInter_MST(Lat, basis, hop, q)
-@time Hbm = hamInter_GBM(Lat, basis, hop, q)
+M = collect(1:10)
+e = []
+for m in M
+	hop = hopGBM(Lat; Pinter=m)
+	@time Hms = hamInter_MST(Lat, basis, hop, q)
+	@time Hbm = hamInter_GBM(Lat, basis, hop, q)
+	push!(e, norm(Hms-Hbm, 2))
+end
 
-# solve the eigen problem
-n_eigs = 20
-n_E = 4
-@time Ems, Ums = eigsolve(Hms, n_eigs, EigSorter(norm; rev=false); krylovdim=n_eigs + 50);
-Ems = Ems[1:2nE]
-sort!(Ems)
-@time Ebm, Ubm = eigsolve(Hbm, n_eigs, EigSorter(norm; rev=false); krylovdim=n_eigs + 50);
-Ebm = Ebm[1:2nE]
-sort!(Ebm)
-P1 = plot(Ems, label = "MS")
-plot!(P1, Ebm, label = "GBM(Pinter=$(p2))")
-
+plot(M,log.(e), label="error")
+plot!(M, log(norm(Lat.latM, 2)) * M,label="")

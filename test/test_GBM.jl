@@ -29,7 +29,7 @@ sort!(Ems)
 Ebm = Ebm[1:2nE]
 sort!(Ebm)
 e = norm(Ebm - Ems, Inf)
-println(" Taylor order = ($(p1), $(p2))  Error = $(e)")
+println(" Taylor order = ($(p1), $(p2))  Energy Error = $(e)")
 P1 = plot(Ems, label = "MS")
 plot!(P1, Ebm, label = "GBM($(p1),$(p2))")
 
