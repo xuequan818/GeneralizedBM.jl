@@ -4,7 +4,7 @@ using Plots, Plots.PlotMeasures, LaTeXStrings
 using LinearAlgebra
 
 θ = 1.1 # twist angle 
-rcut = 50.0 # cutoff of the basis
+rcut = 30.0 # cutoff of the basis
 
 # define the TBL model
 Lat = TBLG(θ)
