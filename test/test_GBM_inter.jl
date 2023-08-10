@@ -20,5 +20,5 @@ for m in M
 	push!(e, norm(Hms-Hbm, 2))
 end
 
-plot(M,log.(e), label="error")
+plot(M,log.(e), label="inter error")
 plot!(M, log(norm(Lat.latM, 2)) * M,label="")
