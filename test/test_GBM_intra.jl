@@ -4,7 +4,7 @@ using Plots
 using LinearAlgebra
 
 θ = 1. # twist angle 
-rcut = 60.0 # cutoff of the basis
+rcut = 50.0 # cutoff of the basis
 
 # define the TBL model
 Lat = TBLG(θ)
@@ -17,8 +17,8 @@ for m in M
 	hop = hopGBM(Lat; Pintra=m)
 	@time Hms = hamIntra_MS(Lat, basis, hop, q)
 	@time Hbm = hamIntra_GBM(Lat, basis, hop, q)
-	push!(e, norm(Hms-Hbm, 2))
+	push!(e, norm(Hms-Hbm, Inf))
 end
 
 plot(M,log.(e), label="intra error")
-plot!(M, log(norm(Lat.latM, 2)) * M,label="")
+plot!(M, log(norm(Lat.latM, Inf)) * M,label="")
