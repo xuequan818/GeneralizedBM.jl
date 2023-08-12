@@ -9,8 +9,11 @@ rcut = 60. # cutoff of the basis
 
 # define the TBL model
 Lat = TBLG(θ);
-hop = hopGBM(Lat; Pintra=1, Pinter=0)
-basis = Basis(rcut,Lat);
+p1 = 2
+p2 = 1
+tau = 4
+hop = hopGBM(Lat; Pintra=p1, Pinter=p2, τ=tau)
+basis = Basis(rcut, Lat);
 
 # generate hamiltonian at momentum q
 A = Lat.KM[1]

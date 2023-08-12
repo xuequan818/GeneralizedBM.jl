@@ -8,7 +8,8 @@ rcut = 30.0 # cutoff of the basis
 
 # define the TBL model
 Lat = TBLG(θ)
-hop = hopGBM(Lat)
+tau = 4
+hop = hopGBM(Lat; τ = tau)
 #h = hopBM(Lat; Kt=map(x -> Lat.KM[2], 1:3));
 basis = Basis(rcut, Lat);
 
@@ -60,7 +61,7 @@ Eq = reshape(Eq, 2nE, length(qx))
 Eq = hcat(Eq, Eq[:,1])
 pind = [1, length(qAB[1]), length(qAB[1]) + length(qBC[1]) - 1, length(qx)+1]
 pname = [L"K", L"\Gamma", L"M", L"K"]
-P3 = plot(Eq[1, :], ylims=[-1.1*maximum(abs.(Eq)), 1.1*maximum(abs.(Eq))], ylabel="Energy", guidefontsize=22, color=cols[1], title=L"%$θ^\circ", label="", tickfontsize=20, legendfontsize=20, xticks=(pind, pname),
+P3 = plot(Eq[1, :], ylims=[-1.1*maximum(abs.(Eq)), 1.1*maximum(abs.(Eq))], ylabel="Energy", guidefontsize=22, color=cols[1], title=L"\theta = %$θ^\circ, \tau = %$tau", label="", tickfontsize=20, legendfontsize=20, xticks=(pind, pname),
 legend=:topright, grid=:off, box=:on, size=(740, 620), titlefontsize=30, right_margin=3mm, top_margin=3mm, lw = 3)
 for i = 2:2nE
 	plot!(P3, Eq[i,:],label="", lw = 3)

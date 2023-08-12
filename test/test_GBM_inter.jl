@@ -21,4 +21,4 @@ for m in M
 end
 
 plot(M,log.(e), label="inter error")
-plot!(M, log(norm(Lat.latM, Inf)) * M,label="")
+plot!(M, log(norm(Lat.latM, Inf)) * M, label="")

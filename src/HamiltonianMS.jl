@@ -135,7 +135,7 @@ function hamInter_MST(Lat::TBLG, basis::Basis, h::Hopping, q::Vector{Float64})
         @. G2j = j + (k2 - 1) * orbl
 
         for l = 1:ltau # loop for the corresponding reciprocal lattices of sheet1
-            @. G1k = Btau[l] - G2k + Gmax + 1
+            @. G1k = Btau[l, :] - G2k + Gmax + 1
             if maximum(G1k) <= size(Gind, 1) && minimum(G1k) > 0
                 k1 = Gind[G1k[1], G1k[2]]
                 if k1 > 0

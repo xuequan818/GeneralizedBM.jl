@@ -13,7 +13,7 @@ hij : interlayer hopping function
 hiiTP : Taylor polynomial of intralayer hopping function
 hijTP : Taylor polynomial of interlayer hopping function
 Kt : Taylor expansion points for h11, h22 and hij, respectively
-τ : truncation of hopping function
+τ : truncation parameter of interlayer hopping function
 Bτ : corresponding truncated basis index
 Giτ : corresponding reciprocal lattices of i-sheet
 """
@@ -28,19 +28,30 @@ struct Hopping
     hijTP::Function
     Kt::Vector{Vector{Float64}}
     τ::Int64
-    Bτ::Vector{Vector{Int64}}
-    G1τ::Vector{Vector{Float64}}
-    G2τ::Vector{Vector{Float64}}
+    Bτ::Matrix{Int64}
+    G1τ::Matrix{Float64}
+    G2τ::Matrix{Float64}
 end
 
-# A temporary version that needs to be refined.
-function BtauGen(τ::Int64)
+function BtauGen(τ::Int64, Kt::Vector{Float64}, latR::Matrix{Float64})
 
-    @assert τ == 1
+    Bt = zeros(Int64, (2τ + 1)^2, 2)
+    l = 1
+    for i = -τ:τ, j = -τ:τ
+        Bt[l, 1] = i
+        Bt[l, 2] = j
+        l += 1
+    end
 
-    Btau = [[0, 0], [0, 1], [-1, 0]]
+    BtG = Bt * latR' .+ Kt'
+    dist = round.(sqrt.(BtG[:, 1] .^ 2 + BtG[:, 2] .^ 2); digits=1)
+    sp = sortperm(dist)
+    sort!(dist)
+    dd = unique(dist)
+    ind = findfirst(isequal(dd[τ+1]), dist)
+    
+    return Bt[sp[1:ind-1], :]
 end
-
 
 function hopTaylor(hrl::Function, him::Function, P::Int64, qt::Vector{Float64}, q::Vector{Float64})
     
@@ -115,9 +126,10 @@ function hopGBM(Lat::TBLG, t::Float64, Kt::Vector{Vector{Float64}}, Pintra::Int6
     hij(k, hval1, hval2) = interTP(orbf, hFT, 0, k, k, hval1, hval2)
     hijTP(qt, q, hval1, hval2) = interTP(orbf, hFT, Pinter, qt, q, hval1, hval2)
 
-    Bτ = BtauGen(τ)
-    G1τ = map(x -> latR[1] * x, Bτ)
-    G2τ = map(x -> latR[2] * x, Bτ)
+    # hopping truncation of interlayer
+    Bτ = BtauGen(τ, Kt[3], latR[1])
+    G1τ = Bτ * latR[1]'
+    G2τ = Bτ * latR[2]'
 
     return Hopping(Pintra, Pinter, h11, h22, hij, h11TP, h22TP, hijTP, Kt, τ, Bτ, G1τ, G2τ)
 end

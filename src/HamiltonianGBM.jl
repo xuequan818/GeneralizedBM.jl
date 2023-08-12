@@ -94,11 +94,11 @@ function hamInter_GBM(Lat::TBLG, basis::Basis, h::Hopping, q::Vector{Float64})
         @. G2j = j + (k2 - 1) * orbl
 
         for l = 1:ltau # loop for the corresponding reciprocal lattices of sheet1
-            @. G1 = Btau[l] - G2k + Gmax + 1
+            @. G1 = Btau[l, :] - G2k + Gmax + 1
             if maximum(G1) <= size(Gind, 1) && minimum(G1) > 0
                 k1 = Gind[G1[1], G1[2]]
                 if k1 > 0
-                    @. qkt = Kt + G1tau[l]
+                    @. qkt = Kt + G1tau[l, :]
                     hij(qkt, qm, v12, v21)
 
                     @. G1j = j + (k1 - 1 + dof) * orbl
