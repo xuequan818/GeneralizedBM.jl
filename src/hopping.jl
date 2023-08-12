@@ -1,8 +1,3 @@
-#----------------------------------------------------------------------------
-# hopping functions: 
-# IntraHop for intralayer hopping
-# InterHop for interlayer hopping
-#----------------------------------------------------------------------------
 export Hopping, hopGBM
 
 """Hopping
