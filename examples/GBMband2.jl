@@ -8,9 +8,9 @@ rcut = 30. # cutoff of the basis
 
 # define the TBL model
 Lat = TBLG(θ);
-p1 = 1
+p1 = 2
 p2 = 1
-tau = 4
+tau = 3
 hop = hopGBM(Lat; Pintra=p1, Pinter=p2, τ = tau)
 basis = Basis(rcut, Lat);
 
@@ -41,8 +41,10 @@ n_eigs = 14
 nE = 4
 for (q1, q2, i) in zip(qx, qy, 1:length(qx))
     println(" $(i)-th q of $(length(qx)) q-points")
-    H = ham_GBM(Lat, basis, hop, [q1, q2])
-    @time E, U = eigsolve(H, n_eigs, EigSorter(norm; rev=false); krylovdim=n_eigs + 50)
+    @time begin
+        H = ham_GBM(Lat, basis, hop, [q1, q2])
+        E, U = eigsolve(H, n_eigs, EigSorter(norm; rev=false); krylovdim=n_eigs + 50)
+    end
     sort!(E) 
     l1 = findfirst(x -> x > 0.0, E)
     E1 = maximum([minimum([abs(E[l1-j] - E[l1+j-1]), abs(E[l1-j] + E[l1+j-1])]) for j = 1:nE])

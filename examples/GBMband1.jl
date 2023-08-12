@@ -43,8 +43,10 @@ n_eigs = 16
 nE = 6
 for (q1,q2,i) in zip(qx,qy,1:length(qx))
     println(" $(i)-th q of $(length(qx)) q-points")
-    H = ham_GBM(Lat, basis, hop, [q1, q2])
-	@time E, U = eigsolve(H, n_eigs, EigSorter(norm; rev=false); krylovdim=n_eigs + 50);
+    @time begin
+        H = ham_GBM(Lat, basis, hop, [q1, q2])
+        E, U = eigsolve(H, n_eigs, EigSorter(norm; rev=false); krylovdim=n_eigs + 50)
+    end
 	#s = sortperm(E)
     #s1 = findfirst(x -> x == 1, s)
     #s2 = findfirst(x -> x == 2, s)
