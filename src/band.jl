@@ -1,4 +1,4 @@
-export path
+export path, band
 
 function path(A::Vector{Float64}, B::Vector{Float64}, factor::Int64)
 
@@ -15,4 +15,19 @@ function path(A::Vector{Float64}, B::Vector{Float64}, factor::Int64)
     end
 
     return xx, yy
+end
+
+function band(H, nE::Int64; fv = 0., n_eigs=2nE + 8)
+    g(x) = abs(fv - x)
+
+    E, U = eigsolve(H, n_eigs, EigSorter(g; rev=false); krylovdim=n_eigs + 50)
+    sort!(E)
+    l1 = findfirst(x -> x >= fv, E)
+    E1 = abs.([(E[l1-j] + E[l1+j-1]) / 2 for j = 1:nE] .- 2fv)
+    E2 = abs.([(E[l1+1-j] + E[l1+j]) / 2 for j = 1:nE] .- 2fv)
+    E3 = abs.([(E[l1-j-1] + E[l1+j-2]) / 2 for j = 1:nE] .- 2fv)
+    l2 = findmin(sum.([E1, E2, E3]))[2]
+    l = [l1, l1 + 1, l1 - 1][l2]
+
+    return E[l-nE:l+nE-1]
 end

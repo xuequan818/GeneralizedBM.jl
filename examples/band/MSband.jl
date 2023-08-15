@@ -9,7 +9,6 @@ rcut = 30.0 # cutoff of the basis
 # define the TBL model
 Lat = TBLG(θ)
 hop = hopGBM(Lat)
-#h = hopBM(Lat; Kt=map(x -> Lat.KM[2], 1:3));
 basis = Basis(rcut, Lat);
 
 # build the symmetric path (K->Γ->M->K)
@@ -35,28 +34,13 @@ P2 = plot(qx, qy, st=:scatter, aspect_ratio=:equal, xlims=[minimum(qx) - 0.1, ma
 
 # generate the band structure
 Eq = []
-n_eigs = 14
-nE = 4
+nE = 6
+fv = 0.01 
 for (q1, q2, i) in zip(qx, qy, 1:length(qx))
     println(" $(i)-th q of $(length(qx)) q-points")
-    @time begin 
-        H = ham_MS(Lat, basis, hop, [q1, q2])
-        E, U = eigsolve(H, n_eigs, EigSorter(norm; rev=false); krylovdim=n_eigs + 50)
-    end
-    s = sortperm(E)
-    s1 = findfirst(x -> x == 1, s)
-    s2 = findfirst(x -> x == 2, s)
-    sort!(E)
-    a1 = E[s1] 
-    a2 = E[s2]
-    l1 = a1*a2 < 0 ? findfirst(x->x>0.,E) : (a1 > 0 ? s2 : s1) 
-    l1 = findfirst(x -> x > 0.0, E)
-    E1 = maximum([minimum([abs(E[l1-j] - E[l1+j-1]), abs(E[l1-j] + E[l1+j-1])]) for j = 1:nE])
-    E2 = maximum([minimum([abs(E[l1+1-j] - E[l1+j]), abs(E[l1-j+1] + E[l1+j])]) for j = 1:nE])
-    E3 = maximum([minimum([abs(E[l1-j-1] - E[l1+j-2]), abs(E[l1-j-1] + E[l1+j-2])]) for j = 1:nE])
-    l2 = findmin([E1, E2, E3])[2]
-    l = [l1, l1 + 1, l1 - 1][l2]
-    append!(Eq, E[l-nE:l+nE-1])
+    @time H = ham_MS(Lat, basis, hop, [q1, q2])
+    @time E = band(H, nE; fv=fv)
+    append!(Eq, E)
 end
 Eq = reshape(Eq, 2nE, length(qx))
 Eq = hcat(Eq, Eq[:,1])
