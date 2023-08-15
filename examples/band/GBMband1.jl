@@ -5,12 +5,12 @@ using LinearAlgebra
 
 θ = 1.1 # twist angle 
 rcut = 30. # cutoff of the basis
+p1 = 3 # intralayer expansion order
+p2 = 2 # interlayer expansion order
+tau = 4 # interlayer hopping truncation
 
 # define the TBL model
 Lat = TBLG(θ);
-p1 = 3
-p2 = 2
-tau = 4
 hop = hopGBM(Lat; Pintra=p1, Pinter=p2, τ=tau)
 basis = Basis(rcut, Lat);
 
