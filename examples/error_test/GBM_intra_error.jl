@@ -17,7 +17,7 @@ hop = hopGBM(Lat;τ=tau)
 # generate band at momentum q
 q = [Lat.KM[1][1] + norm(Lat.KM[1] - Lat.KM[2]) * sqrt(3) / 2, 0.0]
 @time H0 = ham_MST(Lat, basis, hop, q)
-E0 = band(H0, nE; fv = 0.01)
+E0 = band(H0, nE)
 
 M = collect(0:8)
 e = []

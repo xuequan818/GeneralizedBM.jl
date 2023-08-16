@@ -17,7 +17,7 @@ function path(A::Vector{Float64}, B::Vector{Float64}, factor::Int64)
     return xx, yy
 end
 
-function band(H, nE::Int64; fv = 0., n_eigs=2nE + 8)
+function band(H, nE::Int64; fv = 0.01, n_eigs=2nE + 8)
     g(x) = abs(fv - x)
 
     E, U = eigsolve(H, n_eigs, EigSorter(g; rev=false); krylovdim=n_eigs + 50)
