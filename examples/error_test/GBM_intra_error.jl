@@ -1,6 +1,6 @@
 using KrylovKit
 using GeneralizedBM
-using Plots
+using Plots, Plots.PlotMeasures, LaTeXStrings
 using LinearAlgebra
 
 θ = 1.1 # twist angle 
