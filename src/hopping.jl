@@ -39,7 +39,7 @@ function BtauGen(τ::Int64, Kt::Vector{Float64}, latR::Matrix{Float64})
     end
 
     BtG = Bt * latR' .+ Kt'
-    dist = round.(sqrt.(BtG[:, 1] .^ 2 + BtG[:, 2] .^ 2); digits=1)
+    dist = round.(sqrt.(BtG[:, 1] .^ 2 + BtG[:, 2] .^ 2); digits=2)
     sp = sortperm(dist)
     sort!(dist)
     dd = unique(dist)
