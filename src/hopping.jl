@@ -82,6 +82,7 @@ function interTP(orb::Vector{Array{Float64,2}}, g::Function, P::Int64, G1, G2, q
     hval1, hval2
 end
 
+# hopping sorted as AA, AB, BA, BB
 function hopGBM(Lat::TBLG, t::Float64, Pintra::Int64, Pinter::Int64, τ::Int64)
     lat = Lat.lat
     latR = Lat.latR

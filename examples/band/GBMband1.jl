@@ -3,11 +3,11 @@ using GeneralizedBM
 using Plots, Plots.PlotMeasures, LaTeXStrings
 using LinearAlgebra
 
-θ = 1.1 # twist angle 
+θ = 1.05 # twist angle 
 rcut = 30. # cutoff of the basis
-p1 = 1 # intralayer expansion order
-p2 = 0 # interlayer expansion order
-tau = 1 # interlayer hopping truncation
+p1 = 2 # intralayer expansion order
+p2 = 1 # interlayer expansion order
+tau = 4 # interlayer hopping truncation
 
 # define the TBL model
 Lat = TBLG(θ);
@@ -20,7 +20,7 @@ B = Lat.KM[2]
 C = [B[1],B[2] + norm(A-B)]
 D = [A[1] + sqrt(3)/2 * norm(A-B),0.]
 
-num = 9
+num = 30
 qAB = path(A,B,num);
 qBC = path(B,C,num);
 qCD = path(C,D,Int(round(sqrt(3)*num)));
