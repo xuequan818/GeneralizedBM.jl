@@ -8,6 +8,9 @@ export hamIntra_MS, hamInter_MS, ham_MS, hamInter_MST, ham_MST
 function hamIntra_MS(Lat::TBLG, basis::Basis, h::Hopping, q::Vector{Float64})
     h1 = h.h11
     h2 = h.h22
+
+    G1 = basis.G1
+    G2 = basis.G2
     GM = basis.GM
     dof = basis.dof
 
@@ -30,11 +33,13 @@ function hamIntra_MS(Lat::TBLG, basis::Basis, h::Hopping, q::Vector{Float64})
     hv2 = zeros(ComplexF64, N)
     for k = 1:dof #loop for the reciprocal lattices
         @views Gk = GM[k, :]
+        @views G1k = G1[k, :]
         @. q2 = Gk + q
-        h1(q2, hv1)
+        h1(G1k, q2, hv1)
 
         @. q1 = -Gk + q
-        h2(q1, hv2)
+        @views G2k = G2[k, :]
+        h2(G2k, q1, hv2)
 
         @. G2i = i + (k - 1) * orbl
         @. G2j = j + (k - 1) * orbl
@@ -79,8 +84,10 @@ function hamInter_MS(Lat::TBLG, basis::Basis, h::Hopping, q::Vector{Float64})
         @. G2i = i + (k2 - 1) * orbl
         @. G2j = j + (k2 - 1) * orbl
         for k1 = 1:dof # loop for the reciprocal lattices of sheet1
-            @. qmn = q + G1[k1, :] + G2[k2, :]
-            hij(qmn, v12, v21)
+            @views G1k = G1[k1, :]
+            @views G2k = G2[k2, :]
+            @. qmn = q + G1k + G2k
+            hij(G1k, G2k, qmn, v12, v21)
             if norm(v12, Inf) > tol
                 @. G1j = j + (k1 - 1 + dof) * orbl
                 @. G1i = i + (k1 - 1 + dof) * orbl
@@ -131,6 +138,7 @@ function hamInter_MST(Lat::TBLG, basis::Basis, h::Hopping, q::Vector{Float64})
     v21 = zeros(ComplexF64, N)
     for k2 = 1:dof # loop for the reciprocal lattices of sheet 2
         @views G2k = G[k2, :]
+        @views G2kr = G2[k2, :]
         @. G2i = i + (k2 - 1) * orbl
         @. G2j = j + (k2 - 1) * orbl
 
@@ -139,8 +147,9 @@ function hamInter_MST(Lat::TBLG, basis::Basis, h::Hopping, q::Vector{Float64})
             if maximum(G1k) <= size(Gind, 1) && minimum(G1k) > 0
                 k1 = Gind[G1k[1], G1k[2]]
                 if k1 > 0
-                    @. qmn = q + G1[k1, :] + G2[k2, :]
-                    hij(qmn, v12, v21)
+                    @views G1kr = G1[k1, :]
+                    @. qmn = q + G1kr + G2kr
+                    hij(G1kr, G2kr, qmn, v12, v21)
 
                     @. G1j = j + (k1 - 1 + dof) * orbl
                     @. G1i = i + (k1 - 1 + dof) * orbl

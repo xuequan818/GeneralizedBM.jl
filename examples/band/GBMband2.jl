@@ -5,9 +5,9 @@ using LinearAlgebra
 
 θ = 1.1 # twist angle 
 rcut = 30. # cutoff of the basis
-p1 = 3 # intralayer expansion order
-p2 = 2 # interlayer expansion order
-tau = 4 # interlayer hopping truncation
+p1 = 1 # intralayer expansion order
+p2 = 0 # interlayer expansion order
+tau = 1 # interlayer hopping truncation
 
 # define the TBL model
 Lat = TBLG(θ);

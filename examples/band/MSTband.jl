@@ -3,8 +3,8 @@ using GeneralizedBM
 using Plots, Plots.PlotMeasures, LaTeXStrings
 using LinearAlgebra
 
-θ = 0.6# twist angle 
-rcut = 100.0 # cutoff of the basis
+θ = 1.1 # twist angle 
+rcut = 30.0 # cutoff of the basis
 
 # define the TBL model
 Lat = TBLG(θ)
