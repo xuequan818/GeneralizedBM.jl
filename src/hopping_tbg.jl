@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------------
 # hopping functions of TBG
-# Bloch transform without orbitals
+# Bloch transform orbitals
 #-------------------------------------------------------------------------------
 export hopTBG
 
