@@ -72,7 +72,7 @@ function hamInter_MS(Lat::TBLG, basis::Basis, h::Hopping, q::Vector{Float64})
     indj = Int64[]
     vals = ComplexF64[]
 
-    tol = 1e-6
+    tol = 1e-5
     qmn = zeros(Float64, 2)
     G1i = zeros(Int64, N)
     G1j = zeros(Int64, N)

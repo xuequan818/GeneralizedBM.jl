@@ -43,9 +43,9 @@ function BtauGen(τ::Int64, Kt::Vector{Float64}, latR::Matrix{Float64})
     sp = sortperm(dist)
     sort!(dist)
     dd = unique(dist)
-    ind = findfirst(isequal(dd[τ+1]), dist)
+    indt = [findfirst(isequal(dd[i]), dist) for i = 1:τ+1]
     
-    return Bt[sp[1:ind-1], :]
+    return Bt[sp[1:indt[end]-1], :], indt
 end
 
 function intraTP(orb::Array{Float64,2}, Frl::Function, Fim::Function, P::Int64, G, qt::Vector{Float64}, q::Vector{Float64}, hval::Vector{ComplexF64})
@@ -53,8 +53,8 @@ function intraTP(orb::Array{Float64,2}, Frl::Function, Fim::Function, P::Int64, 
     vrl = Frl(qt)
     vim = Fim(qt)
     for i = 1:P
-        vrl += derivative(Frl, qt, q, i) / factorial(i) # directional derivative of real part
-        vim += derivative(Fim, qt, q, i) / factorial(i) # directional derivative of imaginary part
+        vrl += TaylorDiff.derivative(Frl, qt, q, i) / factorial(i) # directional derivative of real part
+        vim += TaylorDiff.derivative(Fim, qt, q, i) / factorial(i) # directional derivative of imaginary part
     end
 	@. hval = 0.0 + 0.0im
 	hval[2] = exp(im*dot(G,orb[:,2]-orb[:,1]))*(vrl + im * vim)
@@ -67,7 +67,7 @@ function interTP(orb::Vector{Array{Float64,2}}, g::Function, P::Int64, G1, G2, q
 
     gval = g(qt)
     for i = 1:P
-        gval += derivative(g, qt, q, i) / factorial(i)
+        gval += TaylorDiff.derivative(g, qt, q, i) / factorial(i)
     end
 
     hval1[1] = gval * exp(im * (dot(G1, orb[1][:, 1]) - dot(G2, orb[2][:, 1])))
@@ -82,6 +82,7 @@ function interTP(orb::Vector{Array{Float64,2}}, g::Function, P::Int64, G1, G2, q
     hval1, hval2
 end
 
+# Bloch transform with orbitals
 # hopping sorted as AA, AB, BA, BB
 function hopGBM(Lat::TBLG, t::Float64, Pintra::Int64, Pinter::Int64, τ::Int64)
     lat = Lat.lat
@@ -111,12 +112,11 @@ function hopGBM(Lat::TBLG, t::Float64, Pintra::Int64, Pinter::Int64, τ::Int64)
 	hFT(k) = hkl(k,Lz) 
     Lat.Lz = Lz
     hij(G1, G2, k, hval1, hval2) = interTP(orb, hFT, 0, G1, G2, k, k, hval1, hval2)
-    hijTP(G1, G2, qt, q, hval1, hval2) = interTP(orb, hFT, Pinter, G1, G2, qt, q, hval1, hval2)
-
     # hopping truncation of interlayer
-    Bτ = BtauGen(τ, Kt[3], latR[1])
+    Bτ, indτ = BtauGen(τ, Kt[3], latR[1])
     G1τ = Bτ * latR[1]'
     G2τ = Bτ * latR[2]'
+    hijTP(G1, G2, qkt, q, hval1, hval2) = interTP(orb, hFT, Pinter, G1, G2, G1τ[qkt, :] + Kt[3], q, hval1, hval2)
 
     return Hopping(Pintra, Pinter, h11, h22, hij, h11TP, h22TP, hijTP, Kt, τ, Bτ, G1τ, G2τ)
 end

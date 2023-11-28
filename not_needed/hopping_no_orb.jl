@@ -39,13 +39,13 @@ function BtauGen(τ::Int64, Kt::Vector{Float64}, latR::Matrix{Float64})
     end
 
     BtG = Bt * latR' .+ Kt'
-    dist = round.(sqrt.(BtG[:, 1] .^ 2 + BtG[:, 2] .^ 2); digits=1)
+    dist = round.(sqrt.(BtG[:, 1] .^ 2 + BtG[:, 2] .^ 2); digits=2)
     sp = sortperm(dist)
     sort!(dist)
     dd = unique(dist)
-    ind = findfirst(isequal(dd[τ+1]), dist)
-    
-    return Bt[sp[1:ind-1], :]
+    indt = [findfirst(isequal(dd[i]), dist) for i = 1:τ+1]
+
+    return Bt[sp[1:indt[end]-1], :], indt
 end
 
 function hopTaylor(hrl::Function, him::Function, P::Int64, qt::Vector{Float64}, q::Vector{Float64})
@@ -123,7 +123,7 @@ function hopGBM(Lat::TBLG, t::Float64, Pintra::Int64, Pinter::Int64, τ::Int64)
     hijTP(qt, q, hval1, hval2) = interTP(orbf, hFT, Pinter, qt, q, hval1, hval2)
 
     # hopping truncation of interlayer
-    Bτ = BtauGen(τ, Kt[3], latR[1])
+    Bτ, indt = BtauGen(τ, Kt[3], latR[1])
     G1τ = Bτ * latR[1]'
     G2τ = Bτ * latR[2]'
 

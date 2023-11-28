@@ -4,21 +4,21 @@ using Plots, Plots.PlotMeasures, LaTeXStrings
 using LinearAlgebra
 
 θ = 1.1 # twist angle 
-rcut = 30.0 # cutoff of the basis
+rcut = 30. # cutoff of the basis
+p1 = 1 # intralayer expansion order
+p2 = 0 # interlayer expansion order
+tau = 1 # interlayer hopping truncation
 
 # define the TBL model
-Lat = TBLG(θ;a=2.46)
-#hop = hopGBM(Lat)
-hop = hopTBG(Lat; L=8.0, nx=100, ny=100)
-
+Lat = TBLG(θ;a=2.46);
+@time hop = hopTBG(Lat; Pintra=p1, Pinter=p2, τinter = tau)
 basis = Basis(rcut, Lat);
 
 # build the symmetric path (K->Γ->M->K)
 A = Lat.KM[1]
-B = [A[1] + norm(Lat.KM[1] - Lat.KM[2])*sqrt(3)/2, 0.0]
-C = [A[1],0.]
-
-num = 5
+B = [A[1] + norm(Lat.KM[1] - Lat.KM[2]) * sqrt(3) / 2, 0.0]
+C = [A[1], 0.0]
+num = 10
 qAB = path(A, B, Int(round(sqrt(3) * num)));
 qBC = path(B, C, 2num);
 qCA = path(C,A,num);
@@ -37,22 +37,19 @@ P2 = plot(qx, qy, st=:scatter, aspect_ratio=:equal, xlims=[minimum(qx) - 0.1, ma
 # generate the band structure
 Eq = []
 nE = 6
-fv = 0.018
-for (q1, q2, i) in zip(qx, qy, 1:length(qx))
+fv = p2 > 0 ? 0.01 : 0.
+for (q1,q2,i) in zip(qx,qy,1:length(qx))
     println(" $(i)-th q of $(length(qx)) q-points")
-    @time H = ham_MS(Lat, basis, hop, [q1, q2])
-    @time E = band(H, nE; fv=fv)
-    append!(Eq, E)
+    @time H = ham_GBM(Lat, basis, hop, [q1, q2])
+    @time E = band(H, nE; fv = fv)
+	append!(Eq, E)
 end
 Eq = reshape(Eq, 2nE, length(qx))
 Eq = hcat(Eq, Eq[:,1])
 pind = [1, length(qAB[1]), length(qAB[1]) + length(qBC[1]) - 1, length(qx)+1]
 pname = [L"K", L"\Gamma", L"M", L"K"]
-P3 = plot(Eq[1, :], ylims=[-1.1*maximum(abs.(Eq)), 1.1*maximum(abs.(Eq))], ylabel="Energy", guidefontsize=22, color=cols[1], title=L"%$θ^\circ", label="", tickfontsize=20, legendfontsize=20, xticks=(pind, pname),
-legend=:topright, grid=:off, box=:on, size=(740, 620), titlefontsize=30, right_margin=3mm, top_margin=3mm, lw = 1.5)
+P3 = plot(Eq[1, :], ylims=[-1.1 * maximum(abs.(Eq)), 1.1 * maximum(abs.(Eq))], ylabel="Energy", guidefontsize=22, color=cols[1], title=L"%$θ^\circ,\,\, (%$p1,%$p2,%$tau)", label="", tickfontsize=20, legendfontsize=20, xticks=(pind, pname), legend=:topright, grid=:off, box=:on, size=(740, 620), titlefontsize=30, right_margin=3mm, top_margin=3mm, lw=1.5)
 for i = 2:2nE
 	plot!(P3, Eq[i,:],label="", lw = 1.5)
 end
 P3 
-
-#savefig("ms.pdf")

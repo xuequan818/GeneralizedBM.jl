@@ -7,11 +7,8 @@ using LinearAlgebra
 rcut = 30.0 # cutoff of the basis
 
 # define the TBL model
-Lat = TBLG(θ;a=2.46)
-#hop = hopGBM(Lat)
-hop = hopTBG(Lat; L=8.0, nx=100, ny=100)
-
-basis = Basis(rcut, Lat);
+Lat = TBLG(θ; a=2.46)
+hop = hopTBG(Lat; τinter=0)
 
 # build the symmetric path (K->Γ->M->K)
 A = Lat.KM[1]
@@ -37,7 +34,7 @@ P2 = plot(qx, qy, st=:scatter, aspect_ratio=:equal, xlims=[minimum(qx) - 0.1, ma
 # generate the band structure
 Eq = []
 nE = 6
-fv = 0.018
+fv = 0.022
 for (q1, q2, i) in zip(qx, qy, 1:length(qx))
     println(" $(i)-th q of $(length(qx)) q-points")
     @time H = ham_MS(Lat, basis, hop, [q1, q2])

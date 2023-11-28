@@ -105,9 +105,8 @@ function hamInter_GBM(Lat::TBLG, basis::Basis, hop::Hopping, q::Vector{Float64})
             if maximum(G1l) <= size(Gind, 1) && minimum(G1l) > 0
                 k1 = Gind[G1l[1], G1l[2]]
                 if k1 > 0
-                    @. qkt = Kt + G1tau[l, :]
                     @views G1kr = G1[k1, :]
-                    hij(G1kr, G2kr, qkt, qm, v12, v21)
+                    hij(G1kr, G2kr, l, qm, v12, v21)
 
                     @. G1j = j + (k1 - 1 + dof) * orbl
                     @. G1i = i + (k1 - 1 + dof) * orbl
