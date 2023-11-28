@@ -61,18 +61,16 @@ end
 # layer 1 hops to layer 2
 # 1 -> orbital A; 2 -> orbital B
 function inter_tbg_rl(a::Float64, θ::Float64, r, orb1::Int64, orb2::Int64)
-    rd = sqrt(r[1]^2 + r[2]^2 + 0.0000001)#norm(r)
-    R(x) = [cos(x) -sin(x); sin(x) cos(x)]
-    r1 = (R(-pi / 6 + θ / 2)*r)[1]
-	rs = rd / a
+    rd = norm(r)
+    rs = rd / a
     V0 = 0.3155 * exp(-1.7543 * rs^2) * cos(2.001 * rs)
     V3 = -0.0688 * rs^2 * exp(-3.4692 * (rs - 0.5212)^2)
     V6 = -0.0083 * exp(-2.8764 * (rs - 1.5206)^2) * sin(1.5731 * rs)
 
-    ac = acos(r1 / rd) % (2pi/3)
-    theta21 = orb1 == 2 ? ac : ac + pi/3
-	theta2 = ac + pi - θ
-    theta12 = orb2 == 2 ? theta2 : theta2 + pi/3
+    ac = atan(r[2], r[1]) + θ / 2 + pi / 6
+    theta21 = orb1 == 1 ? ac : ac + pi / 3
+    theta2 = pi + ac - θ
+    theta12 = orb2 == 1 ? theta2 : theta2 + pi / 3
 
     r_cut = 8.
     r_cut2 = 7.
