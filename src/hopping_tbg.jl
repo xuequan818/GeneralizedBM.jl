@@ -110,13 +110,13 @@ end
 
 # compF = cos (real) or -sin (imaginary)
 function inter_ft(q, compF::Function, hv::Vector{Float64}, 
-                PQm::Matrix{Float64}, J::Float64, wt::Vector{Float64}, 
-                gv::Vector{Float64}, phase::Vector{Float64})
+                PQm::Matrix{Float64}, J::Float64, wt::Vector{Float64})
 
     q2 = [-q[1] + sqrt(3) * q[2], -sqrt(3) * q[1] - q[2]] / 2
     q3 = [-q[1] - sqrt(3) * q[2], sqrt(3) * q[1] - q[2]] / 2
 
-    @. gv = 0.0
+    phase = zeros(typeof(q[1]), size(PQm, 1))
+    gv = zeros(typeof(q[1]), size(PQm, 1))
     for qk in (q, q2, q3)
         mul!(phase, PQm, qk)
         @. gv = gv + compF(phase)
@@ -136,14 +136,14 @@ function inter_tbg_ft(a::Float64, θ::Float64, PQv::Vector{Vector{Float64}},
 	h21v = inter_tbg_rl.(a, θ, PQv, 2, 1)
 	h22v = inter_tbg_rl.(a, θ, PQv, 2, 2)
 
-    h11ftrl(q) = inter_ft(q, cos, h11v, PQm, J, wt, gv, phase)
-    h12ftrl(q) = inter_ft(q, cos, h12v, PQm, J, wt, gv, phase)
-    h21ftrl(q) = inter_ft(q, cos, h21v, PQm, J, wt, gv, phase)
-    h22ftrl(q) = inter_ft(q, cos, h22v, PQm, J, wt, gv, phase)
-    h11ftim(q) = -inter_ft(q, sin, h11v, PQm, J, wt, gv, phase)
-    h12ftim(q) = -inter_ft(q, sin, h12v, PQm, J, wt, gv, phase)
-    h21ftim(q) = -inter_ft(q, sin, h21v, PQm, J, wt, gv, phase)
-    h22ftim(q) = -inter_ft(q, sin, h22v, PQm, J, wt, gv, phase)
+    h11ftrl(q) = inter_ft(q, cos, h11v, PQm, J, wt)
+    h12ftrl(q) = inter_ft(q, cos, h12v, PQm, J, wt)
+    h21ftrl(q) = inter_ft(q, cos, h21v, PQm, J, wt)
+    h22ftrl(q) = inter_ft(q, cos, h22v, PQm, J, wt)
+    h11ftim(q) = -inter_ft(q, sin, h11v, PQm, J, wt)
+    h12ftim(q) = -inter_ft(q, sin, h12v, PQm, J, wt)
+    h21ftim(q) = -inter_ft(q, sin, h21v, PQm, J, wt)
+    h22ftim(q) = -inter_ft(q, sin, h22v, PQm, J, wt)
 
     return [h11ftrl, h12ftrl, h21ftrl, h22ftrl], [h11ftim, h12ftim, h21ftim, h22ftim]
 end
@@ -251,7 +251,7 @@ end
 
 function hopTBG(Lat::TBLG, Pintra::Int64, 
                 Pinter::Int64, τintra::Int64, τinter::Int64;
-                nx = 100, ny = 100, Lrl = 5.0, Lft = 8.0)
+                nx = 100, ny = 100, Lrl = 5.0, Lft = 8.0, model = "Expansion")
     lat = Lat.lat
     latR = Lat.latR
     orb = Lat.orb
@@ -277,10 +277,11 @@ function hopTBG(Lat::TBLG, Pintra::Int64,
     Bτ, indτ = BtauGen(τinter, Kt[3], latR[1])
     G1τ = Bτ * latR[1]'
     G2τ = Bτ * latR[2]'
-    hspl = inter_trunc_tp(hftrl, hftim, Pinter, G1τ, Kt[3]; L = Lft)
-    hijTP(G1, G2, qkt, q, hval1, hval2) = inter_tbg_ms(orb, hspl[qkt, 1], hspl[qkt, 2], G1, G2, q, hval1, hval2)
 
+    hspl = model == "Expansion" ? inter_trunc_tp(hftrl, hftim, Pinter, G1τ, Kt[3]; L=Lft) : inter_trunc_tp(hftrl, hftim, Pinter, BtauGen(0, Kt[3], latR[1])[1] * latR[1]', Kt[3]; L=Lft)
+    hijTP(G1, G2, qkt, q, hval1, hval2) = inter_tbg_ms(orb, hspl[qkt, 1], hspl[qkt, 2], G1, G2, q, hval1, hval2)
+    
     return Hopping(Pintra, Pinter, h11, h22, hij, h11TP, h22TP, hijTP, Kt, τinter, Bτ, G1τ, G2τ)
 end
 
-hopTBG(Lat::TBLG; Pintra=1, Pinter=0, τintra=4, τinter=1, nx=100, ny=100, Lrl=8., Lft=6.) = hopTBG(Lat, Pintra, Pinter, τintra, τinter; nx=nx, ny=ny, Lrl=Lrl, Lft = Lft)
+hopTBG(Lat::TBLG; Pintra=1, Pinter=0, τintra=4, τinter=1, nx=100, ny=100, Lrl=8.0, Lft=6.0, model="Expansion") = hopTBG(Lat, Pintra, Pinter, τintra, τinter; nx=nx, ny=ny, Lrl=Lrl, Lft=Lft, model = model)

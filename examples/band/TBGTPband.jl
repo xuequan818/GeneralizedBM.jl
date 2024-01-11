@@ -4,10 +4,10 @@ using Plots, Plots.PlotMeasures, LaTeXStrings
 using LinearAlgebra
 
 θ = 1.1 # twist angle 
-rcut = 30. # cutoff of the basis
-p1 = 1 # intralayer expansion order
-p2 = 0 # interlayer expansion order
-tau = 1 # interlayer hopping truncation
+rcut = 20. # cutoff of the basis
+p1 = 2 # intralayer expansion order
+p2 = 1 # interlayer expansion order
+tau = 2 # interlayer hopping truncation
 
 # define the TBL model
 Lat = TBLG(θ;a=2.46);
@@ -18,7 +18,7 @@ basis = Basis(rcut, Lat);
 A = Lat.KM[1]
 B = [A[1] + norm(Lat.KM[1] - Lat.KM[2]) * sqrt(3) / 2, 0.0]
 C = [A[1], 0.0]
-num = 10
+num = 20
 qAB = path(A, B, Int(round(sqrt(3) * num)));
 qBC = path(B, C, 2num);
 qCA = path(C,A,num);
@@ -53,3 +53,5 @@ for i = 2:2nE
 	plot!(P3, Eq[i,:],label="", lw = 1.5)
 end
 P3 
+
+savefig("gbm_tbg.pdf")

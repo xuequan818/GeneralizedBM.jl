@@ -4,12 +4,12 @@ using Plots, Plots.PlotMeasures, LaTeXStrings
 using LinearAlgebra
 
 θ = 1.1 # twist angle 
-rcut = 30.0 # cutoff of the basis
+rcut = 20.0 # cutoff of the basis
 
 # define the TBL model
 Lat = TBLG(θ;a=2.46)
-#hop = hopGBM(Lat)
-hop = hopTBG(Lat; L=8.0, nx=100, ny=100)
+hop = hopGBM(Lat)
+#hop = hopTBG(Lat; L=8.0, nx=100, ny=100)
 
 basis = Basis(rcut, Lat);
 
@@ -18,7 +18,7 @@ A = Lat.KM[1]
 B = [A[1] + norm(Lat.KM[1] - Lat.KM[2])*sqrt(3)/2, 0.0]
 C = [A[1],0.]
 
-num = 5
+num = 20
 qAB = path(A, B, Int(round(sqrt(3) * num)));
 qBC = path(B, C, 2num);
 qCA = path(C,A,num);
@@ -37,7 +37,7 @@ P2 = plot(qx, qy, st=:scatter, aspect_ratio=:equal, xlims=[minimum(qx) - 0.1, ma
 # generate the band structure
 Eq = []
 nE = 6
-fv = 0.018
+fv = 0.005
 for (q1, q2, i) in zip(qx, qy, 1:length(qx))
     println(" $(i)-th q of $(length(qx)) q-points")
     @time H = ham_MS(Lat, basis, hop, [q1, q2])
@@ -55,4 +55,4 @@ for i = 2:2nE
 end
 P3 
 
-#savefig("ms.pdf")
+savefig("ms.pdf")

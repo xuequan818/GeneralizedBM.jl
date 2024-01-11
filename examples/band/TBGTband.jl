@@ -4,12 +4,12 @@ using Plots, Plots.PlotMeasures, LaTeXStrings
 using LinearAlgebra
 
 θ = 1.1 # twist angle 
-rcut = 30.0 # cutoff of the basis
-
 # define the TBL model
 Lat = TBLG(θ; a=2.46)
 tau = 1
-hop = hopTBG(Lat;τinter=tau)
+hop = hopTBG(Lat;τinter=tau,model="MST")
+
+rcut = 30.0 # cutoff of the basis
 basis = Basis(rcut, Lat);
 
 # build the symmetric path (K->Γ->M->K)
@@ -35,7 +35,7 @@ P2 = plot(qx, qy, st=:scatter, aspect_ratio=:equal, xlims=[minimum(qx) - 0.1, ma
 # generate the band structure
 Eq = []
 nE = 6
-fv = 0.01
+fv = 0.02
 for (q1, q2, i) in zip(qx, qy, 1:length(qx))
     println(" $(i)-th q of $(length(qx)) q-points")
     @time H = ham_MST(Lat, basis, hop, [q1, q2])

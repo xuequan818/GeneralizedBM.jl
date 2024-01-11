@@ -4,13 +4,13 @@ using Plots, Plots.PlotMeasures, LaTeXStrings
 using LinearAlgebra
 
 θ = 1.1 # twist angle 
-rcut = 30. # cutoff of the basis
-p1 = 1 # intralayer expansion order
+rcut = 20. # cutoff of the basis
+p1 = 2 # intralayer expansion order
 p2 = 1 # interlayer expansion order
-tau = 4 # interlayer hopping truncation
+tau = 3 # interlayer hopping truncation
 
 # define the TBL model
-Lat = TBLG(θ);
+Lat = TBLG(θ; a=2.46);
 hop = hopGBM(Lat; Pintra=p1, Pinter=p2, τ = tau)
 basis = Basis(rcut, Lat);
 
@@ -18,7 +18,7 @@ basis = Basis(rcut, Lat);
 A = Lat.KM[1]
 B = [A[1] + norm(Lat.KM[1] - Lat.KM[2]) * sqrt(3) / 2, 0.0]
 C = [A[1], 0.0]
-num = 10
+num = 20
 qAB = path(A, B, Int(round(sqrt(3) * num)));
 qBC = path(B, C, 2num);
 qCA = path(C,A,num);
@@ -37,7 +37,7 @@ P2 = plot(qx, qy, st=:scatter, aspect_ratio=:equal, xlims=[minimum(qx) - 0.1, ma
 # generate the band structure
 Eq = []
 nE = 6
-fv = p2 > 0 ? 0.01 : 0.
+fv = p1*p2 > 0 ? 0.0053 : 0.
 for (q1,q2,i) in zip(qx,qy,1:length(qx))
     println(" $(i)-th q of $(length(qx)) q-points")
     @time H = ham_GBM(Lat, basis, hop, [q1, q2])
@@ -53,3 +53,5 @@ for i = 2:2nE
 	plot!(P3, Eq[i,:],label="", lw = 1.5)
 end
 P3 
+
+savefig("gbm.pdf")

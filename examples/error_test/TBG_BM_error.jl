@@ -5,26 +5,26 @@ using LinearAlgebra
 
 θ = 1.1 # twist angle 
 rcut = 20. # cutoff of the basis
-tau = 3
+tau = 2
 nE = 3
 
-# define the TBL model
+# define the TBG model
 Lat = TBLG(θ;a=2.46);
 basis = Basis(rcut, Lat);
-hop = hopGBM(Lat;τ=tau)
+@time hop = hopTBG(Lat;τinter=tau, model="MST")
 
 # generate band at momentum q
 q = [Lat.KM[1][1] + norm(Lat.KM[1] - Lat.KM[2]) * sqrt(3) / 2, 0.0]
 @time H0 = ham_MST(Lat, basis, hop, q)
-fv = 0.0053
+fv = 0.02
 E0 = band(H0, nE;fv=fv)
 
 M = collect(0:3)
 e1 = []
 for m in M
     println("intra order = $(m)")
-    fv = m > 0 ? 0.0053 : 0.0
-	hop = hopGBM(Lat; Pinter=6, Pintra = m, τ=tau)
+    fv = m > 0 ? 0.02 : 0.002
+	@time hop = hopTBG(Lat; Pinter=5, Pintra = m, τinter=tau)
     @time H = ham_GBM(Lat, basis, hop, q)
     E = band(H, nE;fv=fv)
 	push!(e1, norm(E - E0, Inf))
@@ -34,12 +34,12 @@ P = plot(M, e1, yscale=:log10, xticks=[0, 3, 6], ylabel="Error", guidefontsize=2
 e2 = []
 for m in M
     println("inter order = $(m)")
-	fv = m > 0 ? 0.0053 : 0.
-	hop = hopGBM(Lat; Pinter=m, Pintra = 6, τ=tau)
+	fv = m > 0 ? 0.02 : 0.002
+	@time hop = hopTBG(Lat; Pinter=m, Pintra = 5, τinter=tau)
     @time H = ham_GBM(Lat, basis, hop, q)
     E = band(H, nE;fv=fv)
 	push!(e2, norm(E - E0, Inf))
 end
 plot!(M, e2, xlabel="Order", ylabel="Error", label=L"\mathfrak{n}", color=:red, lw=2, marker=:circle, markersize=8, markercolor=:white, markerstrokecolor=:red)
 
-savefig("expansion_3t.pdf")
+savefig("expansion_tbg_2t.pdf")
