@@ -8,7 +8,7 @@ nE = 3
 
 # define the TBL model
 Lat = TBLG(θ;a=2.46);
-hop = hopGBM(Lat)
+hop = hopToy(Lat)
 
 # generate exact band at Gamma point
 q = [Lat.KM[1][1] + norm(Lat.KM[1] - Lat.KM[2]) * sqrt(3) / 2, 0.0]
@@ -20,7 +20,7 @@ E0 = band(H0, nE; fv=fv)
 e = []
 rcut = collect(4.:4.:40.)
 for r in rcut
-    @time H = ham_MS(Lat, Basis(r, Lat), hop, q)
+    @time H = hamiltonian(Lat, Basis(r, Lat), hop, q)
     E = band(H, nE; fv = fv)
     push!(e, norm(E - E0, Inf))
 end

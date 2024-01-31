@@ -13,16 +13,16 @@ basis = Basis(rcut, Lat);
 
 # generate exact band at Gamma point
 q = [Lat.KM[1][1] + norm(Lat.KM[1] - Lat.KM[2]) * sqrt(3) / 2, 0.0]
-hop = hopGBM(Lat)
-@time H0 = ham_MS(Lat, basis, hop, q)
+hop = hopToy(Lat)
+@time H0 = hamiltonian(Lat, basis, hop, q)
 fv = 0.0053
 E0 = band(H0, nE; fv=fv)
 
 e = []
 tau = collect(1:6)
 for t in tau
-    hop = hopGBM(Lat; τ = t)
-    @time H = ham_MST(Lat, basis, hop, q)
+    hop = hopToy(Lat; τ = t)
+    @time H = hamiltonian(Lat, basis, hop, q)
     E = band(H, nE; fv=fv)
     push!(e, norm(E - E0, Inf))
 end

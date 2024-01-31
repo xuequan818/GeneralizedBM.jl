@@ -11,7 +11,7 @@ tau = 1 # interlayer hopping truncation
 
 # define the TBL model
 Lat = TBLG(θ);
-hop = hopGBM(Lat; Pintra=p1, Pinter=p2, τ=tau)
+hop = hopToy(Lat; Pintra=p1, Pinter=p2, τ=tau)
 basis = Basis(rcut, Lat);
 
 # build the symmetric path (K->K'->Γ->Γ->K)
@@ -43,7 +43,7 @@ nE = 3
 fv = p2 > 0 ? 0.01 : 0.0
 for (q1, q2, i) in zip(qx, qy, 1:length(qx))
     println(" $(i)-th q of $(length(qx)) q-points")
-    @time H = ham_GBM(Lat, basis, hop, [q1, q2])
+    @time H = hamiltonian(Lat, basis, hop, [q1, q2])
     @time E = band(H, nE; fv=fv)
     append!(Eq, E)
 end

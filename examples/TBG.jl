@@ -8,7 +8,7 @@ using LinearAlgebra
 
 # define the TBL model
 Lat = TBLG(θ; a=2.46)
-@time hop = hopTBG(Lat; model = "MS");
+@time hop = hopTBG(Lat);
 
 rcut = 20.0 # cutoff of the basis
 basis = Basis(rcut, Lat);
@@ -17,8 +17,7 @@ basis = Basis(rcut, Lat);
 A = Lat.KM[1]
 B = Lat.KM[2]
 C = [B[1], B[2] + norm(A - B)]
-@time Hms = ham_MS(Lat, basis, hop, A
-);
+@time Hms = hamiltonian(Lat, basis, hop, A);
 
 # solve the eigen problem
 n_eigs = 10

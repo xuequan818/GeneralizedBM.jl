@@ -1,58 +1,11 @@
-export Hopping, hopGBM
-
-"""Hopping
-Pintra : expansion order of intralayer
-Pinter : expansion order of interlayer
-hii : intralayer hopping function
-hij : interlayer hopping function
-hiiTP : Taylor polynomial of intralayer hopping function
-hijTP : Taylor polynomial of interlayer hopping function
-Kt : Taylor expansion points for h11, h22 and hij, respectively
-τ : truncation parameter of interlayer hopping function
-Bτ : corresponding truncated basis index
-Giτ : corresponding reciprocal lattices of i-sheet
-"""
-struct Hopping
-	Pintra::Int64
-	Pinter::Int64
-    h11::Function
-    h22::Function
-    hij::Function
-    h11TP::Function
-    h22TP::Function
-    hijTP::Function
-    Kt::Vector{Vector{Float64}}
-    τ::Int64
-    Bτ::Matrix{Int64}
-    G1τ::Matrix{Float64}
-    G2τ::Matrix{Float64}
-end
-
-function BtauGen(τ::Int64, Kt::Vector{Float64}, latR::Matrix{Float64})
-
-    Bt = zeros(Int64, (2τ + 1)^2, 2)
-    l = 1
-    for i = -τ:τ, j = -τ:τ
-        Bt[l, 1] = i
-        Bt[l, 2] = j
-        l += 1
-    end
-
-    BtG = Bt * latR' .+ Kt'
-    dist = round.(sqrt.(BtG[:, 1] .^ 2 + BtG[:, 2] .^ 2); digits=2)
-    sp = sortperm(dist)
-    sort!(dist)
-    dd = unique(dist)
-    indt = [findfirst(isequal(dd[i]), dist) for i = 1:τ+1]
-    
-    return Bt[sp[1:indt[end]-1], :], indt
-end
+export hopToy_intra, hopToy_inter, hopToy
 
 function intraTP(orb::Array{Float64,2}, Frl::Function, Fim::Function, P::Int64, G, qt::Vector{Float64}, q::Vector{Float64}, hval::Vector{ComplexF64})
 	
     vrl = Frl(qt)
     vim = Fim(qt)
     for i = 1:P
+        # D^i h(qt)*q^i/ i! 
         vrl += TaylorDiff.derivative(Frl, qt, q, i) / factorial(i) # directional derivative of real part
         vim += TaylorDiff.derivative(Fim, qt, q, i) / factorial(i) # directional derivative of imaginary part
     end
@@ -84,11 +37,10 @@ end
 
 # Bloch transform with orbitals
 # hopping sorted as AA, AB, BA, BB
-function hopGBM(Lat::TBLG, t::Float64, Pintra::Int64, Pinter::Int64, τ::Int64)
+function hopToy_intra(Lat::TBLG, t::Float64, Pintra)
     lat = Lat.lat
     latR = Lat.latR
     orb = Lat.orb
-    Kt = push!(copy(Lat.KM), Lat.KM[1])
 
     #F(k, i) = -t * exp(im*dot(k,orb[i][:,2]-orb[i][:,1]) * (1 + exp(-im * dot(k, lat[i][:, 1])) + exp(-im * dot(k, lat[i][:, 2])))
     # intralayer hopping
@@ -100,8 +52,20 @@ function hopGBM(Lat::TBLG, t::Float64, Pintra::Int64, Pinter::Int64, τ::Int64)
     Fim2(k) = Fim(k, 2)
     h11(G, k, hval) = intraTP(orb[1], Frl1, Fim1, 0, G, k, k, hval)
     h22(G, k, hval) = intraTP(orb[2], Frl2, Fim2, 0, G, k, k, hval)
-    h11TP(G, q, hval) = intraTP(orb[1], Frl1, Fim1, Pintra, G, Kt[1], q, hval)
-    h22TP(G, q, hval) = intraTP(orb[2], Frl2, Fim2, Pintra, G, Kt[2], q, hval)
+    intraHop = IntraHopMS(h11,h22)
+    if Pintra != nothing    
+        h11TP(G, q, hval) = intraTP(orb[1], Frl1, Fim1, Pintra, G, Lat.KM[1], q, hval)
+        h22TP(G, q, hval) = intraTP(orb[2], Frl2, Fim2, Pintra, G, Lat.KM[2], q, hval)
+        intraHop = IntraHopGBM(Pintra, h11TP, h22TP, Lat.KM)
+    end
+
+    intraHop
+end
+
+function hopToy_inter(Lat::TBLG, τ, Pinter)
+    lat = Lat.lat
+    latR = Lat.latR
+    orb = Lat.orb
 
     # interlayer hopping
     # h(r, l) = exp(-α*sqrt(r^2+l^2))
@@ -112,13 +76,25 @@ function hopGBM(Lat::TBLG, t::Float64, Pintra::Int64, Pinter::Int64, τ::Int64)
 	hFT(k) = hkl(k,Lz) 
     Lat.Lz = Lz
     hij(G1, G2, k, hval1, hval2) = interTP(orb, hFT, 0, G1, G2, k, k, hval1, hval2)
+    interHop = InterHopMS([hFT], hij)
     # hopping truncation of interlayer
-    Bτ, indτ = BtauGen(τ, Kt[3], latR[1])
-    G1τ = Bτ * latR[1]'
-    G2τ = Bτ * latR[2]'
-    hijTP(G1, G2, qkt, q, hval1, hval2) = interTP(orb, hFT, Pinter, G1, G2, G1τ[qkt, :] + Kt[3], q, hval1, hval2)
+    if τ != nothing
+        Bτ, indτ, numτ = BtauGen(τ, Lat.KM[1], latR[1])
+        G1τ = Bτ * latR[1]'
+        G2τ = Bτ * latR[2]'
+        interHop = InterHopMST([hFT], hij, τ, numτ, Bτ, G1τ, G2τ)
+        if Pinter != nothing
+            hijTP(G1, G2, qkt, q, hval1, hval2) = interTP(orb, hFT, Pinter, G1, G2, G1τ[qkt, :] + Lat.KM[1], q, hval1, hval2)
+            interHop = InterHopGBM(Pinter, hijTP, [hFT], Lat.KM[1], τ, numτ, Bτ, G1τ, G2τ)
+        end
+    end
 
-    return Hopping(Pintra, Pinter, h11, h22, hij, h11TP, h22TP, hijTP, Kt, τ, Bτ, G1τ, G2τ)
+    interHop
 end
 
-hopGBM(Lat::TBLG; t=2.6 * 2 / sqrt(3), Pintra = 1, Pinter = 0, τ = 1) = hopGBM(Lat, t, Pintra, Pinter, τ)
+function hopToy(Lat::TBLG; t=2.6 * 2 / sqrt(3), Pintra = nothing, Pinter = nothing, τ = nothing) 
+    intraHop = hopToy_intra(Lat, t, Pintra)
+    interHop = hopToy_inter(Lat, τ, Pinter)
+    
+    return Hopping(intraHop, interHop)
+end

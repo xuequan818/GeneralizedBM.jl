@@ -2,7 +2,7 @@
 # hopping functions of TBG
 # Bloch transform orbitals
 #-------------------------------------------------------------------------------
-export hopTBG
+export hopTBG_intra, hopTBG_inter, hopTBG
 
 #-------------------------------------------------------------------------------
 # intra hopping functions setting
@@ -249,20 +249,33 @@ function inter_trunc_tp(hrl::Vector{Function}, him::Vector{Function}, P::Int64, 
     return hfunc
 end
 
-function hopTBG(Lat::TBLG, Pintra::Int64, 
-                Pinter::Int64, τintra::Int64, τinter::Int64;
-                nx = 100, ny = 100, Lrl = 5.0, Lft = 8.0, model = "Expansion")
+function hopTBG_intra(Lat::TBLG, Pintra, 
+                τintra::Int64)
     lat = Lat.lat
     latR = Lat.latR
     orb = Lat.orb
-    Kt = push!(copy(Lat.KM), Lat.KM[1])
+    KM = Lat.KM
 
     # intralayer hopping
     F1rl, F2rl, F1im, F2im = intra_tbg_ms(Lat; τ=τintra)
     h11(G, k, hval) = intra_tbg_tp(orb[1], F1rl, F1im, 0, G, k, k, hval)
     h22(G, k, hval) = intra_tbg_tp(orb[2], F2rl, F2im, 0, G, k, k, hval)
-    h11TP(G, q, hval) = intra_tbg_tp(orb[1], F1rl, F1im, Pintra, G, Kt[1], q, hval)
-    h22TP(G, q, hval) = intra_tbg_tp(orb[2], F2rl, F2im, Pintra, G, Kt[2], q, hval)
+    intraHop = IntraHopMS(h11, h22)
+    if Pintra != nothing
+        h11TP(G, q, hval) = intraTP(orb[1], Frl1, Fim1, Pintra, G, KM[1], q, hval)
+        h22TP(G, q, hval) = intraTP(orb[2], Frl2, Fim2, Pintra, G, KM[2], q, hval)
+        intraHop = IntraHopGBM(Pintra, h11TP, h22TP, Lat.KM)
+    end
+
+    intraHop
+end
+
+function hopTBG_inter(Lat::TBLG, Pinter, τinter;
+                nx=100, ny=100, Lrl=5.0, Lft=8.0)
+    lat = Lat.lat
+    latR = Lat.latR
+    orb = Lat.orb
+    KM = Lat.KM
 
     # interlayer hopping
     a = norm(lat[1][:,1])
@@ -272,16 +285,27 @@ function hopTBG(Lat::TBLG, Pintra::Int64,
     hftrl, hftim = inter_tbg_ft(a, Lat.θ, PQv, PQm, J, wt, gv, phase)
     hsplrl, hsplim = inter_tbg_spl(hftrl, hftim; L = Lft)
     hij(G1, G2, q, hval1, hval2) = inter_tbg_ms(orb, hsplrl, hsplim, G1, G2, q, hval1, hval2)
-
-    # hopping truncation of interlayer
-    Bτ, indτ = BtauGen(τinter, Kt[3], latR[1])
-    G1τ = Bτ * latR[1]'
-    G2τ = Bτ * latR[2]'
-
-    hspl = model == "Expansion" ? inter_trunc_tp(hftrl, hftim, Pinter, G1τ, Kt[3]; L=Lft) : inter_trunc_tp(hftrl, hftim, Pinter, BtauGen(0, Kt[3], latR[1])[1] * latR[1]', Kt[3]; L=Lft)
-    hijTP(G1, G2, qkt, q, hval1, hval2) = inter_tbg_ms(orb, hspl[qkt, 1], hspl[qkt, 2], G1, G2, q, hval1, hval2)
+    interHop = InterHopMS([hftrl, hftim], hij)
+    if τinter != nothing
+        # hopping truncation of interlayer
+        Bτ, indτ, numτ = BtauGen(τinter, Lat.KM[1], latR[1])
+        G1τ = Bτ * latR[1]'
+        G2τ = Bτ * latR[2]'
+        interHop = InterHopMST([hftrl, hftim], hij, τinter, numτ, Bτ, G1τ, G2τ)
+        if Pinter != nothing
+            hspl = inter_trunc_tp(hftrl, hftim, Pinter, G1τ, KM[1]; L=Lft)
+            hijTP(G1, G2, qkt, q, hval1, hval2) = inter_tbg_ms(orb, hspl[qkt, 1], hspl[qkt, 2], G1, G2, q, hval1, hval2)
+            interHop = InterHopGBM(Pinter, hijTP, [hftrl, hftim], Lat.KM[1], τinter, numτ, Bτ, G1τ, G2τ)
+        end
+    end
     
-    return Hopping(Pintra, Pinter, h11, h22, hij, h11TP, h22TP, hijTP, Kt, τinter, Bτ, G1τ, G2τ)
+    return interHop
 end
 
-hopTBG(Lat::TBLG; Pintra=1, Pinter=0, τintra=4, τinter=1, nx=100, ny=100, Lrl=8.0, Lft=6.0, model="Expansion") = hopTBG(Lat, Pintra, Pinter, τintra, τinter; nx=nx, ny=ny, Lrl=Lrl, Lft=Lft, model = model)
+function hopTBG(Lat::TBLG; Pintra=nothing, Pinter=nothing, τintra=4, τinter=nothing, nx=100, ny=100, Lrl=8.0, Lft=6.0)
+    intraHop = hopTBG_intra(Lat, Pintra, τintra)
+    interHop = hopTBG_inter(Lat, Pinter, τinter;
+        nx=nx, ny=ny, Lrl=Lrl, Lft=Lft)
+    
+    return Hopping(intraHop, interHop)
+end

@@ -11,11 +11,11 @@ nE = 3
 # define the TBG model
 Lat = TBLG(θ;a=2.46);
 basis = Basis(rcut, Lat);
-@time hop = hopTBG(Lat;τinter=tau, model="MST")
+@time hop = hopTBG(Lat;τinter=tau)
 
 # generate band at momentum q
 q = [Lat.KM[1][1] + norm(Lat.KM[1] - Lat.KM[2]) * sqrt(3) / 2, 0.0]
-@time H0 = ham_MST(Lat, basis, hop, q)
+@time H0 = hamiltonian(Lat, basis, hop, q)
 fv = 0.02
 E0 = band(H0, nE;fv=fv)
 
@@ -25,7 +25,7 @@ for m in M
     println("intra order = $(m)")
     fv = m > 0 ? 0.02 : 0.002
 	@time hop = hopTBG(Lat; Pinter=5, Pintra = m, τinter=tau)
-    @time H = ham_GBM(Lat, basis, hop, q)
+    @time H = hamiltonian(Lat, basis, hop, q)
     E = band(H, nE;fv=fv)
 	push!(e1, norm(E - E0, Inf))
 end
@@ -36,7 +36,7 @@ for m in M
     println("inter order = $(m)")
 	fv = m > 0 ? 0.02 : 0.002
 	@time hop = hopTBG(Lat; Pinter=m, Pintra = 5, τinter=tau)
-    @time H = ham_GBM(Lat, basis, hop, q)
+    @time H = hamiltonian(Lat, basis, hop, q)
     E = band(H, nE;fv=fv)
 	push!(e2, norm(E - E0, Inf))
 end

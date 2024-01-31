@@ -8,19 +8,19 @@ nE = 3
 
 # define the TBG model
 Lat = TBLG(θ; a=2.46)
-@time hop = hopTBG(Lat; model="MS");
+@time hop = hopTBG(Lat)
 
 # generate exact band at Gamma point
 q = [Lat.KM[1][1] + norm(Lat.KM[1] - Lat.KM[2]) * sqrt(3) / 2, 0.0]
 basis = Basis(60., Lat);
-@time H0 = ham_MS(Lat, basis, hop, q)
+@time H0 = hamiltonian(Lat, basis, hop, q)
 fv = 0.02
 E0 = band(H0, nE; fv=fv)
 
 e = []
 rcut = collect(10.:2.:30.)
 for r in rcut
-    @time H = ham_MS(Lat, Basis(r, Lat), hop, q)
+    @time H = hamiltonian(Lat, Basis(r, Lat), hop, q)
     E = band(H, nE; fv=fv)
     push!(e, norm(E - E0, Inf))
 end
