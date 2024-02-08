@@ -3,7 +3,7 @@ using GeneralizedBM
 using Plots, Plots.PlotMeasures, LaTeXStrings
 using LinearAlgebra
 
-θ = 1. # twist angle 
+θ = 1.1 # twist angle 
 nE = 3
 
 # define the TBL model
@@ -13,7 +13,7 @@ hop = hopToy(Lat)
 # generate exact band at Gamma point
 q = [Lat.KM[1][1] + norm(Lat.KM[1] - Lat.KM[2]) * sqrt(3) / 2, 0.0]
 basis = Basis(80., Lat);
-@time H0 = ham_MS(Lat, basis, hop, q)
+@time H0 = hamiltonian(Lat, basis, hop, q)
 fv = 0.0053
 E0 = band(H0, nE; fv=fv)
 

@@ -11,5 +11,7 @@ Lat = TBLG(θ; a=2.46)
 
 rcut = 20.0 # cutoff of the basis
 basis = Basis(rcut, Lat);
-P = band_plot(Lat, basis, hop, 0.02; num=10)
+pind, P = band_plot(Lat, basis, hop, 0.02; num=15)
 plot!(P, title=L"%$θ^\circ")
+
+savefig("pics/ms_tbg.pdf")
