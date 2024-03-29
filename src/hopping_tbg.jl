@@ -2,7 +2,7 @@
 # hopping functions of TBG
 # Bloch transform orbitals
 #-------------------------------------------------------------------------------
-export hopTBG_intra, hopTBG_inter, hopTBG
+export hopTBG_intra, hopTBG_inter, hopTBG, hopTBG_inter_strength
 
 #-------------------------------------------------------------------------------
 # intra hopping functions setting
@@ -262,8 +262,8 @@ function hopTBG_intra(Lat::TBLG, Pintra,
     h22(G, k, hval) = intra_tbg_tp(orb[2], F2rl, F2im, 0, G, k, k, hval)
     intraHop = IntraHopMS(h11, h22)
     if Pintra != nothing
-        h11TP(G, q, hval) = intraTP(orb[1], Frl1, Fim1, Pintra, G, KM[1], q, hval)
-        h22TP(G, q, hval) = intraTP(orb[2], Frl2, Fim2, Pintra, G, KM[2], q, hval)
+        h11TP(G, q, hval) = intraTP(orb[1], F1rl, F1im, Pintra, G, KM[1], q, hval)
+        h22TP(G, q, hval) = intraTP(orb[2], F2rl, F2im, Pintra, G, KM[2], q, hval)
         intraHop = IntraHopGBM(Pintra, h11TP, h22TP, Lat.KM)
     end
 
@@ -300,6 +300,24 @@ function hopTBG_inter(Lat::TBLG, Pinter, τinter;
     end
     
     return interHop
+end
+
+function hopTBG_inter_strength(Lat::TBLG;
+    nx=100, ny=100, Lrl=5.0, Lft=8.0)
+    lat = Lat.lat
+    latR = Lat.latR
+    orb = Lat.orb
+    KM = Lat.KM
+
+    # interlayer hopping
+    a = norm(lat[1][:, 1])
+    PQv, PQm, J, wt = quad_nodes(Lrl, nx, ny)
+    gv = zero(wt)
+    phase = zero(wt)
+    hftrl, hftim = inter_tbg_ft(a, Lat.θ, PQv, PQm, J, wt, gv, phase)
+    hsplrl, hsplim = inter_tbg_spl(hftrl, hftim; L=Lft)   
+
+    return hsplrl, hsplim
 end
 
 function hopTBG(Lat::TBLG; Pintra=nothing, Pinter=nothing, τintra=4, τinter=nothing, nx=100, ny=100, Lrl=8.0, Lft=6.0)

@@ -4,7 +4,7 @@ using Plots, Plots.PlotMeasures, LaTeXStrings
 using LinearAlgebra
 
 θ = 1.05 # twist angle 
-rcut = 30. # cutoff of the basis
+rcut = 0.3 # cutoff of the basis
 p1 = 1 # intralayer expansion order
 p2 = 0 # interlayer expansion order
 tau = 1 # interlayer hopping truncation

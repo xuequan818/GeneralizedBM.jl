@@ -1,4 +1,4 @@
-export path_local, path, band, band_plot
+export path_local, path, band, band_path, band_plot
 
 function path_local(A::Vector{Float64}, B::Vector{Float64}, factor::Int64)
 
@@ -53,10 +53,10 @@ function path(A::Vector{Float64}, B::Vector{Float64}, fac1::Int64, fac2::Int64, 
     return [xx, yy], r    
 end
 
-function band(H, nE::Int64; fv = 0.01, n_eigs=2nE + 8)
+function band(H, nE::Int64; fv = 0.01, n_eigs=3nE + 10)
     g(x) = abs(fv - x)
 
-    E, U = eigsolve(H, n_eigs, EigSorter(g; rev=false); krylovdim=n_eigs + 50)
+    E, U = eigsolve(H, n_eigs, EigSorter(g; rev=false); krylovdim=n_eigs + 100)
     sort!(E)
     l1 = findfirst(x -> x >= fv, E)
     E1 = abs.([(E[l1-j] + E[l1+j-1]) / 2 for j = 1:nE] .- 2fv)
@@ -65,10 +65,10 @@ function band(H, nE::Int64; fv = 0.01, n_eigs=2nE + 8)
     l2 = findmin(sum.([E1, E2, E3]))[2]
     l = [l1, l1 + 1, l1 - 1][l2]
 
-    return E[l-nE:l+nE-1]
+    return E, l-nE:l+nE-1
 end
 
-function band_plot(Lat, basis, hop, fv;num=10, nE=6, width=2)
+function band_path(Lat, basis, hop, fv;num=10, nE=6, width=2, tol = 0.1)
 
     # build the symmetric path (K->Γ->M->K)
     A = Lat.KM[1]
@@ -81,27 +81,53 @@ function band_plot(Lat, basis, hop, fv;num=10, nE=6, width=2)
     qx = vcat(qAB[1], qBC[1][2:end], qCA[1][2:end])
     qy = vcat(qAB[2], qBC[2][2:end], qCA[2][2:end])
     rf = vcat(rAB, rBC[2:end], rCA[2:end])
+    pind = [rf[1], rf[length(qAB[1])], rf[length(qAB[1])+length(qBC[1])-1], rf[end]]
+
 
     # generate the band structure
     Eq = []
     nE = nE
     fv = typeof(hop.interHop) == InterHopGBM ? (hop.interHop.Pinter == 0 ? 0 : fv) : fv
-    for (q1,q2,i) in zip(qx,qy,1:length(qx))
-        println(" $(i)-th q of $(length(qx)) q-points")
-        @time H = hamiltonian(Lat, basis, hop, [q1, q2])
-        @time E = band(H, nE; fv = fv)
-        append!(Eq, E)
+    E1, index1 = band(hamiltonian(Lat, basis, hop, [qx[1], qy[1]]), nE; fv=fv)
+    E1 = E1[index1]
+    Eq = copy(E1)
+    for (q1,q2,i) in zip(qx[2:end],qy[2:end],2:length(qx))
+        (i % 5 == 0 || i == length(qx)) && println(" $(i)-th q of $(length(qx)) q-points")
+        H = hamiltonian(Lat, basis, hop, [q1, q2])
+        E, index0 = band(H, nE; fv = fv)
+        index = index0
+        for l in [-2,-1,1,2]
+            if norm(E[index]-E1) < tol
+                break;
+            end
+            il = index0 .+ l
+            if il[1] > 0
+                index = index0 .+ l
+            end
+        end
+        E1 = E[index]
+        append!(Eq, E1)
     end
     Eq = reshape(Eq, 2nE, length(qx))
 
+    Eq, rf, pind
+end
+
+function band_plot(band_info)
+
+    Eq = band_info[1]
+    rf = band_info[2]
+    pind = band_info[3]
+
     #plot band
     cols = collect(palette(:tab10))
-    pind = [rf[1], rf[length(qAB[1])], rf[length(qAB[1])+length(qBC[1])-1], rf[end]]
     pname = [L"K", L"\Gamma", L"M", L"K"]
-    P = plot(rf, Eq[1, :], ylims=[-1.1 * maximum(abs.(Eq)), 1.1 * maximum(abs.(Eq))], ylabel="Energy", xticks=(pind, pname), guidefontsize = 22, color=cols[1], label="", tickfontsize=20, legendfontsize=20, legend=:topright, grid=:off, box=:on, size=(740, 620), titlefontsize=30, right_margin=3mm, top_margin=3mm, lw=1.5)
-    for i = 2:2nE
-        plot!(P, rf, Eq[i,:],label="", lw = 1.5)
+    P = plot(rf, Eq[1, :], ylims=[-1.1 * maximum(abs.(Eq)), 1.1 * maximum(abs.(Eq))], ylabel="Energy", xticks=(pind, pname), guidefontsize=22, color=cols[1], label="", tickfontsize=20, legendfontsize=20, legend=:topright, grid=:off, box=:on, size=(740, 620), titlefontsize=30, right_margin=3mm, top_margin=3mm, lw=1.5)
+    for i = 2:size(Eq,1)
+        plot!(P, rf, Eq[i, :], label="", lw=1.5)
     end
 
     pind, P
 end
+
+band_plot(Lat, basis, hop, fv; num=10, nE=6, width=2) = band_plot(band_path(Lat, basis, hop, fv;num=num, nE=nE, width=width))

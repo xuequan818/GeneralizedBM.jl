@@ -82,7 +82,7 @@ function inter_bm_tp(orb::Vector{Array{Float64,2}}, P::Int64, htvec::Vector{Vect
     hval1, hval2
 end
 
-function hopToyBM(Lat::TBLG; t=2.6 * 2 / sqrt(3), Pintra=2, Pinter=2, τ=1)
+function hopToyBM(Lat::TBLG; t=2.6 * 2 / sqrt(3), Pintra=nothing, Pinter=nothing, τ=1)
     intraHop = hopToy_intra(Lat, t, Pintra)
 
     lat = Lat.lat

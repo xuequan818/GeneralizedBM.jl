@@ -9,8 +9,8 @@ Gi : reciprocal lattices of sheet i
 GM : Moire lattices (Θ21*n)
 dof : size of Monolayer basis
 """
-struct Basis
-	rcut::Float64
+struct Basis{T<:Real}
+	rcut::T 
 	Gmax::Int64
 	G::Matrix{Int64}
     Gind::Matrix{Int64}
@@ -20,12 +20,11 @@ struct Basis
 	dof::Int64
 end
 
-function basisGen(rcut::Float64, Lat::TBLG)
+function basisGen(rcut::T, Lat::TBLG) where {T<:Real}
     latM = Lat.latM
-	latR1 = Lat.latR[1]
-    latR2 = Lat.latR[2]
+	latR = Lat.latR
 
-    Gmax = floor(Int, rcut / norm(latR1[:, 1]))
+    Gmax = floor(Int, rcut / norm(latM[:, 1]))
     Gmin = -Gmax
 
 	Gt = zeros(Float64, 2)
@@ -36,7 +35,7 @@ function basisGen(rcut::Float64, Lat::TBLG)
 	for t1 = Gmin : Gmax, t2 = Gmin : Gmax
 		t[1] = t1
 		t[2] = t2
-		mul!(Gt, latR1, t)
+		mul!(Gt, latM, t)
 		if norm(Gt) <= rcut
 			append!(G, t)
             @. t = t + Gmax + 1
@@ -47,13 +46,13 @@ function basisGen(rcut::Float64, Lat::TBLG)
 	end
 
     G = Array(reshape(G, 2, Int(length(G) / 2))')
-	G1 = G * latR1'
-    G2 = G * latR2'
+	G1 = G * latR[1]'
+    G2 = G * latR[2]'
     GM = G * latM'
     dof = size(G,1)
-    println(" rcut = ", rcut, "; Monolayer DOF = ", dof, "; Matrix DOF = ", 2dof * size(Lat.orb, 1))
+    println(" rcut = ", rcut, "; Monolayer G DOF = ", dof, "; Matrix DOF = ", 2dof * size(Lat.orb, 1))
 
 	return Basis(rcut, Gmax, G, Gind, G1, G2, GM, dof)
 end
 
-Basis(rcut::Float64, Lat::TBLG) = basisGen(rcut, Lat)
+Basis(rcut::T, Lat::TBLG) where {T<:Real} = basisGen(rcut, Lat)

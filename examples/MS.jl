@@ -5,7 +5,7 @@ using LinearAlgebra
 
 
 θ = 1. # twist angle 
-rcut = 20.0 # cutoff of the basis
+rcut = 1 # cutoff of the basis
 
 # define the TBL model
 Lat = TBLG(θ;a = 2.46)

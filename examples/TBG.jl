@@ -10,7 +10,7 @@ using LinearAlgebra
 Lat = TBLG(θ; a=2.46)
 @time hop = hopTBG(Lat);
 
-rcut = 20.0 # cutoff of the basis
+rcut = 1 # cutoff of the basis
 basis = Basis(rcut, Lat);
 
 # generate hamiltonian at momentum q

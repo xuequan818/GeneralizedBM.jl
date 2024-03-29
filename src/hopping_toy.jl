@@ -1,4 +1,4 @@
-export hopToy_intra, hopToy_inter, hopToy
+export hopToy_intra, hopToy_inter, hopToy, hopToy_inter_strength
 
 function intraTP(orb::Array{Float64,2}, Frl::Function, Fim::Function, P::Int64, G, qt::Vector{Float64}, q::Vector{Float64}, hval::Vector{ComplexF64})
 	
@@ -69,7 +69,7 @@ function hopToy_inter(Lat::TBLG, τ, Pinter)
 
     # interlayer hopping
     # h(r, l) = exp(-α*sqrt(r^2+l^2))
-    α = 2.0
+    α = 2.
     hkl(k, l) = (α * exp(-l * sqrt(k[1]^2 + k[2]^2 + α^2)) * (1 + l * sqrt(k[1]^2 + k[2]^2 + α^2)) / (k[1]^2 + k[2]^2 + α^2)^(3 / 2)) / 2pi
     f(l) = Lat.latR_UV[1] * hkl(Lat.KM[1], l) - 0.11
     Lz = find_zeros(f, 0.0, α)[1]
@@ -90,6 +90,21 @@ function hopToy_inter(Lat::TBLG, τ, Pinter)
     end
 
     interHop
+end
+
+function hopToy_inter_strength(Lat::TBLG)
+    lat = Lat.lat
+
+    # interlayer hopping
+    # h(r, l) = exp(-α*sqrt(r^2+l^2))
+    α = 2.0
+    hkl(k, l) = (α * exp(-l * sqrt(k[1]^2 + k[2]^2 + α^2)) * (1 + l * sqrt(k[1]^2 + k[2]^2 + α^2)) / (k[1]^2 + k[2]^2 + α^2)^(3 / 2)) / 2pi
+    f(l) = Lat.latR_UV[1] * hkl(Lat.KM[1], l) - 0.11
+    Lz = find_zeros(f, 0.0, α)[1]
+	hFT(k) = hkl(k,Lz) 
+    Lat.Lz = Lz
+
+    hFT
 end
 
 function hopToy(Lat::TBLG; t=2.6 * 2 / sqrt(3), Pintra = nothing, Pinter = nothing, τ = nothing) 

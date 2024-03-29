@@ -1,4 +1,4 @@
-export IntraHopping, InterHopping, Hopping
+export IntraHopping, InterHopping, Hopping, BtauGen
 
 """IntraHopping
 Pintra : expansion order of intralayer

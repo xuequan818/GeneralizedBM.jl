@@ -8,23 +8,21 @@ nE = 3
 
 # define the TBG model
 Lat = TBLG(θ; a=2.46)
-basis = Basis(20., Lat);
+basis = Basis(0.2, Lat);
 
-# generate exact band at Gamma point
-q = [Lat.KM[1][1] + norm(Lat.KM[1] - Lat.KM[2]) * sqrt(3) / 2, 0.0]
 @time hop = hopTBG(Lat)
-@time H0 = hamiltonian(Lat, basis, hop, q)
 fv = 0.02
-E0 = band(H0, nE; fv=fv)
+@time band_info = band_path(Lat, basis, hop, fv; num=10, nE=20, tol=0.1)
+#P = band_plot(band_info)[2]
+
 
 e = []
 tau = collect(1:6)
 for t in tau
     @time hop = hopTBG(Lat; τinter=t)
-    @time H = hamiltonian(Lat, basis, hop, q)
-    E = band(H, nE; fv=fv)
-    push!(e, norm(E - E0, Inf))
+    band_info_test = band_path(Lat, basis, hop, fv; num=10, nE=nE, tol=0.1)
+    push!(e, norm(band_info[1] - band_info_test[1], Inf))
 end
-P = plot(tau, e, yscale=:log10, ylabel="Error", xlabel=L"\tau",guidefontsize=22, color=:black, title=L"\theta = %$θ^\circ", label="", tickfontsize=20, legendfontsize=20, legend=:topright, grid=:off, box=:on, size=(740, 620), titlefontsize=30, right_margin=3mm, top_margin=3mm, lw=2, marker=:circle, markersize=8, markercolor=:white,markerstrokecolor=:black)
+P = plot(tau, e, yscale=:log10, ylabel="Error", xlabel=L"\tau", guidefontsize=22, color=:black, title="", label="", tickfontsize=20, legendfontsize=20, legend=:topright, grid=:off, box=:on, size=(740, 600), titlefontsize=30, left_margin=2mm, right_margin=2mm, top_margin=3mm, lw=2, marker=:circle, markersize=8, markercolor=:white, markerstrokecolor=:black)
 
-savefig("hoptrunc_tbg.pdf")
+savefig("pics/hoptrunc_tbg_path.pdf")

@@ -9,9 +9,9 @@ using LinearAlgebra
 Lat = TBLG(θ; a=2.46)
 @time hop = hopTBG(Lat);
 
-rcut = 20.0 # cutoff of the basis
+rcut = 0.2 # cutoff of the basis
 basis = Basis(rcut, Lat);
-pind, P = band_plot(Lat, basis, hop, 0.02; num=15)
-plot!(P, title=L"%$θ^\circ")
+pind, P = band_plot(Lat, basis, hop, 0.02; nE = 8, num=15)
+plot!(P, ylims=(-0.26, 0.3), title="Wannierized")
 
 savefig("pics/ms_tbg.pdf")
