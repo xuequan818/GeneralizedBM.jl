@@ -254,7 +254,6 @@ function hamInter(Lat::TBLG, basis::Basis, hop::InterHopGBM, q::Vector{Float64})
     vals = ComplexF64[]
 
     G1l = zeros(Int64, 2)
-    qkt = zeros(Float64, 2)
     qm = zeros(Float64, 2)
     G1i = zeros(Int64, N)
     G1j = zeros(Int64, N)

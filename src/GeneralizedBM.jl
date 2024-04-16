@@ -10,7 +10,6 @@ include("basis.jl")
 include("hopping_struct.jl")
 include("hopping_toy.jl")
 include("hopping_tbg.jl")
-include("hopping_BM.jl")
 include("Hamiltonian.jl")
 include("band.jl")
 
