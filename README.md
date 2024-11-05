@@ -1,6 +1,6 @@
 # GeneralizedBM.jl
 
-GeneralizedBM uses the tight-binding model and the [continnum model](
+GeneralizedBM uses the tight-binding model and the [continuum model](
 https://doi.org/10.48550/arXiv.2406.15712
 ) to simulate the band structure of two models of twisted bilayer graphene: a [Wannierized physics model](https://doi.org/10.1103/PhysRevB.98.075106), and a [simplified TBG model](https://doi.org/10.1063/5.0115771).
 
